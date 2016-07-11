@@ -17,11 +17,6 @@
 #define WALL_WIDTH 4	
 
 
-
-
-
-
-
 typedef enum wall {
 	UP, DOWN, LEFT, RIGHT
 } wall;
@@ -34,6 +29,66 @@ typedef struct space {
 
 
 
+
+
+void generateBoard(space *board, wall *walls) {
+	/* 	Generate the board
+		For each wall, identify the board spaces that it effects
+		Determine the effect of each affected space's mobility
+	*/
+	int numSpaces = WALL_LENGTH * WALL_WIDTH;
+
+	for (int i = 0; i < WALL_WIDTH; i++) {
+
+		for (int j = 0; j < WALL_LENGTH; j++) {
+			int idx = (i * WALL_LENGTH) + j;
+
+			printf("Maze Generated: %d - %d\n", idx, walls[idx]);
+
+			// Determine the 4 adjacent spaces to this wall
+			int TL = idx + i;
+			int TR = TL +1;
+			int BL = TL + SPACE_LENGTH;
+			int BR = BL +1;
+
+			/*
+			board[TL].right = (board[TL].right) == (walls[idx] == UP);
+			board[TL].down = (board[TL].down) == (walls[idx] == LEFT);
+
+			board[TR].left = (board[TR].left) == (walls[idx] == UP);
+			board[TR].down = (board[TR].down) == (walls[idx] == RIGHT);
+
+			board[BL].right = (board[BL].right) == (walls[idx] == DOWN);
+			board[BL].up = (board[BL].up) == (walls[idx] == LEFT);
+
+			board[BR].left = (board[BR].left) == (walls[idx] == UP);
+			board[BR].up = (board[BR].up) == (walls[idx] == RIGHT);
+			*/
+
+
+		}
+
+	}
+
+	board[0].start = true;
+	board[numSpaces - 1].finish = true;
+
+}
+
+void genBoard(space *board, wall *walls) {
+
+	for (int i = 0; i < SPACE_WIDTH; i++) {
+		for (int j = 0; j < SPACE_LENGTH; j++) {
+			int idx = (i * SPACE_LENGTH) + j;
+			int widx = idx - i;
+
+			if (board[idx].right) board[idx].right = (walls[widx] != UP);
+
+		}
+
+	}
+
+}
 
 
 void outputBoard(space *in) {
@@ -72,9 +127,36 @@ int main(int argc, char const *argv[])
 
 
 	// Initialize, zero out the board 
+	/*
 	for (int i = 0; i < numSpaces; i++) {
 		board[i] = blankSpace;
 	}
+	*/
+	for (int i = 0; i < SPACE_LENGTH; i++) {
+
+		for (int j = 0; j < SPACE_WIDTH; j++) {
+			int idx = (i * SPACE_WIDTH) + j;
+			//board[idx] = blankSpace;
+
+			/*
+			if (i == 0) board[idx].up = false;
+			if (j == 0) board[idx].left = false;
+			if (i == (SPACE_WIDTH - 1)) board[idx].down = false;
+			if (j == (SPACE_LENGTH - 1)) board[idx].right = false;
+			*/
+
+			// Better to avoid divergence
+			board[idx].up = (i != 0);
+			board[idx].left = (j != 0);
+			board[idx].down = (i != (SPACE_WIDTH - 1));
+			board[idx].right = (j != (SPACE_LENGTH - 1));
+			board[idx].start = false;
+			board[idx].finish = false;
+		}
+
+	}
+
+
 	
 	// Generate walls and board
 	srand(1024);
@@ -157,51 +239,9 @@ int main(int argc, char const *argv[])
 	}
 
 
-	/* 	Generate the board
-		For each wall, identify the board spaces that it effects
-		Determine the effect of each affected space's mobility
-	*/
 
+	generateBoard(board, walls);
 
-
-	for (int i = 0; i < WALL_WIDTH; i++) {
-		for (int j = 0; j < WALL_LENGTH; j++) {
-			int idx = (i * WALL_LENGTH) + j;
-
-			printf("Maze Generated: %d - %d\n", idx, walls[idx]);
-
-			// Space idx that this wall affects
-			// Per wall, figure out the adjacent spaces this wall effects
-			// Set T/F value for each space depending how the wall effect its mobility through the maze
-			int TL, TR, BL, BR;
-			TL = idx + i;
-			TR = TL + 1;
-			BL = TL + SPACE_LENGTH;
-			BR = BL + 1;
-
-			//printf("TL: %d, TR: %d, BL: %d, BR: %d\n", TL, TR, BL, BR);
-
-			/*
-			board[TL].right = (board[TL].right) && (walls[idx] != UP);
-			board[TL].down = (board[TL].down) && (walls[idx] != LEFT);
-
-			board[TR].left = (walls[idx] != UP);
-			board[TR].down = (walls[idx] != RIGHT);
-
-			board[BL].right = (walls[idx] != DOWN);
-			board[BL].up = (walls[idx] != LEFT);
-
-			board[BR].left = (walls[idx] != UP);
-			board[BR].up = (walls[idx] != RIGHT);
-			*/
-		}
-	}
-
-	// Generate Board
-	board[0].start = true;
-	board[numSpaces - 1].finish = true;
-
-	// End Board Generation
 
 	outputBoard(board);
 
