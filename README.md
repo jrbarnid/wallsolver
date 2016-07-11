@@ -7,4 +7,4 @@ For the board game "Walls" by So Way Totally Awesome Games.
 
 Goal: Determine best next move depending on current board conditions and anticipating the opponent's response the predicted move.
 
-
+test
