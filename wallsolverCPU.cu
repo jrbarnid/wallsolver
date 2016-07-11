@@ -65,6 +65,17 @@ void generateBoard(space *board, wall *walls) {
 			board[BR].up = (board[BR].up) == (walls[idx] == RIGHT);
 			*/
 
+			if (board[TL].right) board[TL].right = (walls[idx] != UP);
+			if (board[TL].down) board[TL].down = (walls[idx] != LEFT);
+
+			if (board[TR].left) board[TR].left = board[TL].right;
+			if (board[TR].down) board[TR].down = (walls[idx] != RIGHT);
+
+			if (board[BL].right) board[BL].right = (walls[idx] != DOWN);
+			if (board[BL].up) board[BL].up = board[TL].down;
+
+			if (board[BR].left) board[BR].left = board[BL].right;
+			if (board[BR].up) board[BR].up = board[TR].down;
 
 		}
 
