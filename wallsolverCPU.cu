@@ -1,6 +1,6 @@
 /*	CPU Based Wallsolver 
 
-	gcc -Wall wallsolverCPU.c -o testCPU
+	nvcc wallsolverCPU.cu -o testCPU
 
 */
 
@@ -67,8 +67,8 @@ int main(int argc, char const *argv[])
 	int wallSize = sizeof(wall) * numWalls;
 
 	// Malloc the array of wall / board
-	wall *walls = malloc(wallSize);
-	space *board = malloc(spaceSize);
+	wall *walls = (wall *)malloc(wallSize);
+	space *board = (space *)malloc(spaceSize);
 
 
 	// Initialize, zero out the board 
@@ -105,10 +105,7 @@ int main(int argc, char const *argv[])
 			bool colLeft = false;
 			bool colRight = false;
 
-			wall *up = 0;
-			wall *down = 0;
-			wall *left = 0;
-			wall *right = 0;
+			wall up, down, left, right;
 
 
 			if (j < 4) {
