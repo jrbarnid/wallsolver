@@ -112,22 +112,22 @@ int main(int argc, char const *argv[])
 
 
 			if (j < 4) {
-				right = walls[idx + 1];
+				right = &walls[idx + 1];
 				colRight = (walls[idx] == RIGHT) && (right == LEFT);
 			}
 
 			if (j > 0) {
-				left = walls[idx - 1];
+				left = &walls[idx - 1];
 				colLeft = (walls[idx] == LEFT) && (left == RIGHT);
 			}
 
 			if (i < 4) {
-				down = walls[idx + WALL_LENGTH];
+				down = &walls[idx + WALL_LENGTH];
 				colDown = (walls[idx] == DOWN) && (down == UP);
 			} 
 
 			if (i > 0) {
-				up = walls[idx - WALL_LENGTH];
+				up = &walls[idx - WALL_LENGTH];
 				colUp = (walls[idx] == UP) && (up == DOWN);
 			}
 
