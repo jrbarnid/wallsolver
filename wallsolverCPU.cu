@@ -51,20 +51,6 @@ void generateBoard(space *board, wall *walls) {
 			int BL = TL + SPACE_LENGTH;
 			int BR = BL +1;
 
-			/*
-			board[TL].right = (board[TL].right) == (walls[idx] == UP);
-			board[TL].down = (board[TL].down) == (walls[idx] == LEFT);
-
-			board[TR].left = (board[TR].left) == (walls[idx] == UP);
-			board[TR].down = (board[TR].down) == (walls[idx] == RIGHT);
-
-			board[BL].right = (board[BL].right) == (walls[idx] == DOWN);
-			board[BL].up = (board[BL].up) == (walls[idx] == LEFT);
-
-			board[BR].left = (board[BR].left) == (walls[idx] == UP);
-			board[BR].up = (board[BR].up) == (walls[idx] == RIGHT);
-			*/
-
 			if (board[TL].right) board[TL].right = (walls[idx] != UP);
 			if (board[TL].down) board[TL].down = (walls[idx] != LEFT);
 
@@ -86,20 +72,7 @@ void generateBoard(space *board, wall *walls) {
 
 }
 
-void genBoard(space *board, wall *walls) {
 
-	for (int i = 0; i < SPACE_WIDTH; i++) {
-		for (int j = 0; j < SPACE_LENGTH; j++) {
-			int idx = (i * SPACE_LENGTH) + j;
-			int widx = idx - i;
-
-			if (board[idx].right) board[idx].right = (walls[widx] != UP);
-
-		}
-
-	}
-
-}
 
 
 void outputBoard(space *in) {

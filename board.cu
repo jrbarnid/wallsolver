@@ -25,9 +25,30 @@ typedef struct space {
 
 
 __device__ void
-generateBoard(space *board, wall *walls, int tid) {
+generateBoard(space *board, wall *walls, int idx) {
 
 	
 
 }
 
+/*	Parallel coalesced board initialization
+	Blanks out the board
+	idx = threadidx.x
+*/
+__device__ void
+initBoard(space *board, int idx) {
+	// mod = 0 == left edge space
+	// mod = 4 == right edge space
+	int mod = idx % SPACE_LENGTH;
+
+	// Better to avoid divergence
+	board[idx].up = !(i < SPACE_LENGTH);
+	board[idx].left = (mod != 0);
+
+	board[idx].down = !(i > 19);
+	board[idx].right = (mod != 4);
+
+	board[idx].start = (idx == 0);
+	board[idx].finish = (idx == 29);
+
+}
