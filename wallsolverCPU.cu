@@ -29,7 +29,45 @@ typedef struct space {
 
 
 
+bool checkWallCollisions(wall *walls, int idx) {
+	/* 	Make sure no walls overlap
+		For each wall, identify the neighboring walls if they exist
+		determine if a neighbor caused a conflict
+		Return TRUE if there is a collision
+	*/
+	int i = idx / WALL_LENGTH;
+	int j = idx % WALL_WIDTH;
 
+	bool colUp = false;
+	bool colDown = false;
+	bool colLeft = false;
+	bool colRight = false;
+
+	wall up, down, left, right;
+
+	if (j < 4) {
+		right = walls[idx + 1];
+		colRight = (walls[idx] == RIGHT) && (right == LEFT);
+	}
+
+	if (j > 0) {
+		left = walls[idx - 1];
+		colLeft = (walls[idx] == LEFT) && (left == RIGHT);
+	}
+
+	if (i < 4) {
+		down = walls[idx + WALL_WIDTH];
+		colDown = (walls[idx] == DOWN) && (down == UP);
+	} 
+
+	if (i > 0) {
+		up = walls[idx - WALL_LENGTH];
+		colUp = (walls[idx] == UP) && (up == DOWN);
+	}
+
+	// Returns true if there is a collision
+	return (colUp || colDown || colLeft || colRight);
+}
 
 void generateBoard(space *board, wall *walls) {
 	/* 	Generate the board
@@ -72,7 +110,32 @@ void generateBoard(space *board, wall *walls) {
 
 }
 
+void boardInit(space *board) {
+	// Initialize the board, blank
+	for (int i = 0; i < SPACE_LENGTH; i++) {
 
+	for (int j = 0; j < SPACE_WIDTH; j++) {
+			int idx = (i * SPACE_WIDTH) + j;
+			//board[idx] = blankSpace;
+
+			/*
+			if (i == 0) board[idx].up = false;
+			if (j == 0) board[idx].left = false;
+			if (i == (SPACE_WIDTH - 1)) board[idx].down = false;
+			if (j == (SPACE_LENGTH - 1)) board[idx].right = false;
+			*/
+
+			// Better to avoid divergence
+			board[idx].up = (i != 0);
+			board[idx].left = (j != 0);
+			board[idx].down = (i != (SPACE_WIDTH - 1));
+			board[idx].right = (j != (SPACE_LENGTH - 1));
+			board[idx].start = false;
+			board[idx].finish = false;
+		}
+
+	}
+}
 
 
 void outputBoard(space *in) {
@@ -94,11 +157,7 @@ void outputBoard(space *in) {
 
 int main(int argc, char const *argv[])
 {
-	//
-
-	//space blankSpace = {false, false, false, false, false, false};
-	space blankSpace = {true, true, true, true, false, false};
-
+	
 	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
 	int spaceSize = sizeof(space) * numSpaces;
 
@@ -111,38 +170,9 @@ int main(int argc, char const *argv[])
 
 
 	// Initialize, zero out the board 
-	/*
-	for (int i = 0; i < numSpaces; i++) {
-		board[i] = blankSpace;
-	}
-	*/
-	for (int i = 0; i < SPACE_LENGTH; i++) {
+	boardInit(board);
 
-		for (int j = 0; j < SPACE_WIDTH; j++) {
-			int idx = (i * SPACE_WIDTH) + j;
-			//board[idx] = blankSpace;
-
-			/*
-			if (i == 0) board[idx].up = false;
-			if (j == 0) board[idx].left = false;
-			if (i == (SPACE_WIDTH - 1)) board[idx].down = false;
-			if (j == (SPACE_LENGTH - 1)) board[idx].right = false;
-			*/
-
-			// Better to avoid divergence
-			board[idx].up = (i != 0);
-			board[idx].left = (j != 0);
-			board[idx].down = (i != (SPACE_WIDTH - 1));
-			board[idx].right = (j != (SPACE_LENGTH - 1));
-			board[idx].start = false;
-			board[idx].finish = false;
-		}
-
-	}
-
-
-	
-	// Generate walls and board
+	// Generate walls 
 	srand(1024);
 	for (int i = 0; i < WALL_WIDTH; i++) {
 
@@ -156,72 +186,19 @@ int main(int argc, char const *argv[])
 
 	}
 
-	/* 	Make sure no walls overlap
-		For each wall, identify the neighboring walls if they exist
-		determine if a neighbor caused a conflict and while conflicts
-		exist, randomize a new wall
-	*/
-	for (int i = 0; i < WALL_WIDTH; i++) {
-
-		for (int j = 0; j < WALL_LENGTH; j++) {
-			int idx = (i * WALL_LENGTH) + j;
-
-			bool colUp = false;
-			bool colDown = false;
-			bool colLeft = false;
-			bool colRight = false;
-
-			wall up, down, left, right;
 
 
-			if (j < 4) {
-				right = walls[idx + 1];
-				colRight = (walls[idx] == RIGHT) && (right == LEFT);
-			}
+	for (int i = 0; i < WALL_LENGTH; i++) {
 
-			if (j > 0) {
-				left = walls[idx - 1];
-				colLeft = (walls[idx] == LEFT) && (left == RIGHT);
-			}
+		for (int j = 0; j < WALL_WIDTH; j++) {
+			int idx = (i * WALL_WIDTH) + j;
 
-			if (i < 4) {
-				down = walls[idx + WALL_LENGTH];
-				colDown = (walls[idx] == DOWN) && (down == UP);
-			} 
-
-			if (i > 0) {
-				up = walls[idx - WALL_LENGTH];
-				colUp = (walls[idx] == UP) && (up == DOWN);
-			}
-
-
-			while (colUp || colDown || colLeft || colRight) {
+			while (checkWallCollisions(walls, idx)) {
 				printf("IDX No Overlap: %d - %d\n", idx, walls[idx]);
-				walls[idx] = (wall)(rand() % 4);
-
-				if (j < 4) {
-					colRight = (walls[idx] == RIGHT) && (right == LEFT);
-				}
-
-				if (j > 0) {
-					colLeft = (walls[idx] == LEFT) && (left == RIGHT);
-				}
-
-				if (i < 4) {
-					colDown = (walls[idx] == DOWN) && (down == UP);
-				} 
-
-				if (i > 0) {
-					colUp = (walls[idx] == UP) && (up == DOWN);
-				}
-
-
+				walls[idx] = (wall)(rand() % 4);			
 			}
-
 		}
-
 	}
-
 
 
 	generateBoard(board, walls);
