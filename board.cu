@@ -20,9 +20,54 @@ typedef enum wall {
 	UP, DOWN, LEFT, RIGHT
 } wall;
 
+typedef enum status {
+	UNEXPLORED, VISITED, EXPLORED
+} status;
+
 typedef struct space {
 	bool up, down, left, right, start, finish;
+	status state;
 } space;
+
+
+/*	Check if the current wall collides with neighboring walls
+	Returns TRUE if there is a collision at wall IDX	
+*/
+
+__device__ bool checkWallCollisions(wall *walls, int idx) {
+	int i = idx / WALL_LENGTH;
+	int j = idx % WALL_WIDTH;
+
+	bool colUp = false;
+	bool colDown = false;
+	bool colLeft = false;
+	bool colRight = false;
+
+	wall up, down, left, right;
+
+	if (j < 4) {
+		right = walls[idx + 1];
+		colRight = (walls[idx] == RIGHT) && (right == LEFT);
+	}
+
+	if (j > 0) {
+		left = walls[idx - 1];
+		colLeft = (walls[idx] == LEFT) && (left == RIGHT);
+	}
+
+	if (i < 4) {
+		down = walls[idx + WALL_WIDTH];
+		colDown = (walls[idx] == DOWN) && (down == UP);
+	} 
+
+	if (i > 0) {
+		up = walls[idx - WALL_LENGTH];
+		colUp = (walls[idx] == UP) && (up == DOWN);
+	}
+
+	// Returns true if there is a collision
+	return (colUp || colDown || colLeft || colRight);
+}
 
 
 
@@ -120,49 +165,8 @@ boardInit(space *board, int idx) {
 	board[idx].right = (j != (SPACE_LENGTH - 1));
 	board[idx].start = false;
 	board[idx].finish = false;
-
+	board[idx].state = UNEXPLORED;
 }
-
-/*	Check if the current wall collides with neighboring walls
-	Returns TRUE if there is a collision at wall IDX	
-*/
-
-__device__ bool
-checkWallCollisions(wall *walls, int idx) {
-	int i = idx / WALL_LENGTH;
-	int j = idx % WALL_WIDTH;
-
-	bool colUp = false;
-	bool colDown = false;
-	bool colLeft = false;
-	bool colRight = false;
-
-	wall up, down, left, right;
-
-	if (j < 4) {
-		right = walls[idx + 1];
-		colRight = (walls[idx] == RIGHT) && (right == LEFT);
-	}
-
-	if (j > 0) {
-		left = walls[idx - 1];
-		colLeft = (walls[idx] == LEFT) && (left == RIGHT);
-	}
-
-	if (i < 4) {
-		down = walls[idx + WALL_WIDTH];
-		colDown = (walls[idx] == DOWN) && (down == UP);
-	} 
-
-	if (i > 0) {
-		up = walls[idx - WALL_LENGTH];
-		colUp = (walls[idx] == UP) && (up == DOWN);
-	}
-
-	// Returns true if there is a collision
-	return (colUp || colDown || colLeft || colRight);
-}
-
 /*
 
 
