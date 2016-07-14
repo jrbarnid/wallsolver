@@ -4,6 +4,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <cuda_runtime.h>
 
@@ -24,32 +25,101 @@ typedef struct space {
 } space;
 
 
-__device__ void
-generateBoard(space *board, wall *walls, int idx) {
 
-	
+void generateWalls(wall *walls) {
+	/*	Randomly generate the walls for the board
+
+	*/
+	srand(1024);
+	for (int i = 0; i < WALL_WIDTH; i++) {
+
+		for (int j = 0; j < WALL_LENGTH; j++) {
+			int idx = (i * WALL_LENGTH) + j; 	// == walls[i][j];
+
+			walls[idx] = (wall)(rand() % 4);
+			
+			printf("IDX %d - %d\n", idx, walls[idx]);
+		}
+
+	}
+
+	// Check for any wall collisions and re-randomize if necessary
+
+	for (int i = 0; i < WALL_LENGTH; i++) {
+
+		for (int j = 0; j < WALL_WIDTH; j++) {
+			int idx = (i * WALL_WIDTH) + j;
+
+			while (checkWallCollisions(walls, idx)) {
+				printf("IDX No Overlap: %d - %d\n", idx, walls[idx]);
+				walls[idx] = (wall)(rand() % 4);			
+			}
+		}
+	}
 
 }
+
+
+void generateBoard(space *board, wall *walls) {
+	/* 	Generate the board
+		For each wall, identify the board spaces that it effects
+		Determine the effect of each affected space's mobility
+	*/
+	int numSpaces = WALL_LENGTH * WALL_WIDTH;
+
+	for (int i = 0; i < WALL_WIDTH; i++) {
+
+		for (int j = 0; j < WALL_LENGTH; j++) {
+			int idx = (i * WALL_LENGTH) + j;
+
+			printf("Maze Generated: %d - %d\n", idx, walls[idx]);
+
+			// Determine the 4 adjacent spaces to this wall
+			int TL = idx + i;
+			int TR = TL +1;
+			int BL = TL + SPACE_LENGTH;
+			int BR = BL +1;
+
+			if (board[TL].right) board[TL].right = (walls[idx] != UP);
+			if (board[TL].down) board[TL].down = (walls[idx] != LEFT);
+
+			if (board[TR].left) board[TR].left = board[TL].right;
+			if (board[TR].down) board[TR].down = (walls[idx] != RIGHT);
+
+			if (board[BL].right) board[BL].right = (walls[idx] != DOWN);
+			if (board[BL].up) board[BL].up = board[TL].down;
+
+			if (board[BR].left) board[BR].left = board[BL].right;
+			if (board[BR].up) board[BR].up = board[TR].down;
+
+		}
+
+	}
+
+	board[0].start = true;
+	board[numSpaces - 1].finish = true;
+
+}
+
 
 /*	Parallel coalesced board initialization
 	Blanks out the board
 	idx = threadidx.x
 */
 __device__ void
-initBoard(space *board, int idx) {
+boardInit(space *board, int idx) {
 	// mod = 0 == left edge space
 	// mod = 4 == right edge space
-	int mod = idx % SPACE_LENGTH;
+	int i = idx / WALL_LENGTH;
+	int j = idx % WALL_LENGTH;
 
 	// Better to avoid divergence
-	board[idx].up = !(i < SPACE_LENGTH);
-	board[idx].left = (mod != 0);
-
-	board[idx].down = !(i > 19);
-	board[idx].right = (mod != 4);
-
-	board[idx].start = (idx == 0);
-	board[idx].finish = (idx == 29);
+	board[idx].up = (i != 0);
+	board[idx].left = (j != 0);
+	board[idx].down = (i != (SPACE_WIDTH - 1));
+	board[idx].right = (j != (SPACE_LENGTH - 1));
+	board[idx].start = false;
+	board[idx].finish = false;
 
 }
 

@@ -69,6 +69,7 @@ bool checkWallCollisions(wall *walls, int idx) {
 	return (colUp || colDown || colLeft || colRight);
 }
 
+
 void generateBoard(space *board, wall *walls) {
 	/* 	Generate the board
 		For each wall, identify the board spaces that it effects
@@ -110,6 +111,7 @@ void generateBoard(space *board, wall *walls) {
 
 }
 
+
 void boardInit(space *board) {
 	// Initialize the board, blank
 	for (int i = 0; i < SPACE_LENGTH; i++) {
@@ -135,6 +137,40 @@ void boardInit(space *board) {
 		}
 
 	}
+}
+
+
+void generateWalls(wall *walls) {
+	/*	Randomly generate the walls for the board
+
+	*/
+	srand(1024);
+	for (int i = 0; i < WALL_WIDTH; i++) {
+
+		for (int j = 0; j < WALL_LENGTH; j++) {
+			int idx = (i * WALL_LENGTH) + j; 	// == walls[i][j];
+
+			walls[idx] = (wall)(rand() % 4);
+			
+			printf("IDX %d - %d\n", idx, walls[idx]);
+		}
+
+	}
+
+	// Check for any wall collisions and re-randomize if necessary
+
+	for (int i = 0; i < WALL_LENGTH; i++) {
+
+		for (int j = 0; j < WALL_WIDTH; j++) {
+			int idx = (i * WALL_WIDTH) + j;
+
+			while (checkWallCollisions(walls, idx)) {
+				printf("IDX No Overlap: %d - %d\n", idx, walls[idx]);
+				walls[idx] = (wall)(rand() % 4);			
+			}
+		}
+	}
+
 }
 
 
@@ -173,33 +209,7 @@ int main(int argc, char const *argv[])
 	boardInit(board);
 
 	// Generate walls 
-	srand(1024);
-	for (int i = 0; i < WALL_WIDTH; i++) {
-
-		for (int j = 0; j < WALL_LENGTH; j++) {
-			int idx = (i * WALL_LENGTH) + j; 	// == walls[i][j];
-
-			walls[idx] = (wall)(rand() % 4);
-			
-			printf("IDX %d - %d\n", idx, walls[idx]);
-		}
-
-	}
-
-
-
-	for (int i = 0; i < WALL_LENGTH; i++) {
-
-		for (int j = 0; j < WALL_WIDTH; j++) {
-			int idx = (i * WALL_WIDTH) + j;
-
-			while (checkWallCollisions(walls, idx)) {
-				printf("IDX No Overlap: %d - %d\n", idx, walls[idx]);
-				walls[idx] = (wall)(rand() % 4);			
-			}
-		}
-	}
-
+	generateWalls(walls);
 
 	generateBoard(board, walls);
 
