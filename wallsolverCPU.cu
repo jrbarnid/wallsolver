@@ -199,7 +199,6 @@ void outputBoard(space *in) {
 
 		}
 
-
 	}
 
 }
@@ -309,10 +308,10 @@ nextSpace findMinimum(space *in, int adjList[][POSSIBLE_DIRECTIONS], int idx) {
 	return next;
 }
 
-void shortestPath(space *in) {
+void shortestPath(space *in, int idxIn = 0) {
 	int adjList[SPACE_LENGTH*SPACE_WIDTH][POSSIBLE_DIRECTIONS];
 	initializeAdjList(adjList);
-	int i = 0;
+	int i = idxIn;
 	nextSpace next;
 	
 	// Iterate through the board until we reach the finish node.
@@ -357,6 +356,53 @@ void shortestPath(space *in) {
 	printf("Space #%d\n", i);
 }
 
+/*
+
+*/
+int moveWall(wall *in, int idx, wall newDir) {
+	// Local copy of the walls
+	// Set the walls[idx] to the new direction
+
+
+	// return -1 if the new dir = old dir
+	if (in[idx] == newDir) return -1;	
+
+	wall oldDir = in[idx];
+	in[idx] = newDir;
+	// Return -1 if wall move results in collision
+	if ( checkWallCollisions(in, idx) ) return -1;	
+
+	space *board = (space *) malloc( sizeof(space) * (SPACE_LENGTH * SPACE_WIDTH) );
+
+	printf("-- moveWall: wallidx: %d --\n", idx);
+	boardInit(board);
+	generateBoard(board, in);
+	shortestPath(board);
+
+	free(board);
+
+	// Reset to the old direction
+	in[idx] = oldDir;
+	
+	return 0;
+}
+
+void moveAllWalls(wall *walls) {
+
+	for (int i = 0; i < (WALL_LENGTH * WALL_WIDTH); i++) {
+
+		for (int j = 0; j < 3; j++) {
+			moveWall(walls, i, (wall) j);
+		}
+
+	}
+
+}
+
+
+
+
+
 int main(int argc, char const *argv[])
 {
 	
@@ -382,6 +428,8 @@ int main(int argc, char const *argv[])
 
 	outputBoard(board);
 	shortestPath(board);
+
+	moveAllWalls(walls);
 
 	free(walls);
 	free(board);
