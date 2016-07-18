@@ -39,6 +39,28 @@ typedef struct nextSpace {
 } nextSpace;
 
 
+/* These are for an old way of tracking time */
+struct timezone Idunno;	
+struct timeval startTime, endTime;
+
+
+/* 
+	set a checkpoint and show the (natural) running time in seconds 
+*/
+double report_running_time() {
+	long sec_diff, usec_diff;
+	gettimeofday(&endTime, &Idunno);
+	sec_diff = endTime.tv_sec - startTime.tv_sec;
+	usec_diff= endTime.tv_usec-startTime.tv_usec;
+	if(usec_diff < 0) {
+		sec_diff --;
+		usec_diff += 1000000;
+	}
+	printf("Running time for CPU version: %ld.%06ld\n", sec_diff, usec_diff);
+	return (double)(sec_diff*1.0 + usec_diff/1000000.0);
+}
+
+
 
 bool checkWallCollisions(wall *walls, int idx) {
 	/* 	Make sure no walls overlap
@@ -363,18 +385,19 @@ int moveWall(wall *in, int idx, wall newDir) {
 	// Local copy of the walls
 	// Set the walls[idx] to the new direction
 
+	wall oldDir = in[idx];
 
 	// return -1 if the new dir = old dir
 	if (in[idx] == newDir) return -1;	
 
-	wall oldDir = in[idx];
 	in[idx] = newDir;
 	// Return -1 if wall move results in collision
-	if ( checkWallCollisions(in, idx) ) return -1;	
+	if ( checkWallCollisions(in, idx) ) in[idx] = oldDir; return -1;	
 
 	space *board = (space *) malloc( sizeof(space) * (SPACE_LENGTH * SPACE_WIDTH) );
 
 	printf("-- moveWall: wallidx: %d --\n", idx);
+
 	boardInit(board);
 	generateBoard(board, in);
 	shortestPath(board);
@@ -416,7 +439,6 @@ int main(int argc, char const *argv[])
 	wall *walls = (wall *)malloc(wallSize);
 	space *board = (space *)malloc(spaceSize);
 
-
 	// Initialize, zero out the board 
 	boardInit(board);
 
@@ -425,11 +447,16 @@ int main(int argc, char const *argv[])
 
 	generateBoard(board, walls);
 
+	// Start the timer
+	gettimeofday(&startTime, &Idunno);
 
 	outputBoard(board);
 	shortestPath(board);
 
 	moveAllWalls(walls);
+
+	// Report the running time
+	report_running_time();
 
 	free(walls);
 	free(board);
