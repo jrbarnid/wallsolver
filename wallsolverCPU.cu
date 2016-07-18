@@ -16,16 +16,27 @@
 #define WALL_LENGTH 4		// Walls size of rows/colums
 #define WALL_WIDTH 4	
 
+#define POSSIBLE_DIRECTIONS 4 	// Possible directions for traversing/finding neighbors
 
 typedef enum wall {
 	UP, DOWN, LEFT, RIGHT
 } wall;
 
+typedef enum status {
+	UNEXPLORED, VISITED, EXPLORED
+} status;
 
 typedef struct space {
 	bool up, down, left, right, start, finish;
-
+	int parent;
+	int distance;
+	status state;
 } space;
+
+typedef struct nextSpace {
+	int index;
+	int distance;
+} nextSpace;
 
 
 
@@ -75,7 +86,7 @@ void generateBoard(space *board, wall *walls) {
 		For each wall, identify the board spaces that it effects
 		Determine the effect of each affected space's mobility
 	*/
-	int numSpaces = WALL_LENGTH * WALL_WIDTH;
+	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
 
 	for (int i = 0; i < WALL_WIDTH; i++) {
 
@@ -134,6 +145,9 @@ void boardInit(space *board) {
 			board[idx].right = (j != (SPACE_LENGTH - 1));
 			board[idx].start = false;
 			board[idx].finish = false;
+			board[idx].parent = -1;
+			board[idx].distance = 0;
+			board[idx].state = UNEXPLORED;
 		}
 
 	}
@@ -190,6 +204,158 @@ void outputBoard(space *in) {
 
 }
 
+/* Used strictly for debugging. This should not be used in the final version */
+void printAdjList(int adjList[][POSSIBLE_DIRECTIONS]) {
+	int i = 0;
+	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
+
+	for (i = 0; i < numSpaces; ++i) {
+		printf("Space #%d's neighbors: UP: %d, DOWN: %d, LEFT: %d, RIGHT: %d \n", i, 
+				adjList[i][0], adjList[i][1], adjList[i][2], adjList[i][3]);
+	}
+}
+
+/* Set all neighbors to -1, then cycle through and add neighbors for each space
+   All spaces marked with -1 afterwards means the neighbor is invalid and can be ignored
+*/
+void initializeAdjList(int adjList[][POSSIBLE_DIRECTIONS]) {
+	int i = 0;
+	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
+
+	for (i = 0; i < numSpaces; ++i) {
+		int j;
+		for (j = 0; j < POSSIBLE_DIRECTIONS; ++j) {
+			adjList[i][j] = -1;
+		}
+	}
+	
+	for (i = 0; i < numSpaces; ++i) {
+		// Add up neighbor to list
+		if (i >= SPACE_WIDTH)
+			adjList[i][0] = i - SPACE_LENGTH;
+		
+		// Add down neighbor to list
+		if (i < (numSpaces - SPACE_WIDTH))
+			adjList[i][1] = i + SPACE_LENGTH;
+		
+		// Add left neighbor to list
+		if (i % SPACE_WIDTH != 0)
+			adjList[i][2] = i - 1;
+
+		// Add right neighbor to list 
+		if (i % SPACE_WIDTH != (SPACE_WIDTH - 1))
+			adjList[i][3] = i + 1;
+	}
+	// printAdjList(adjList);
+}
+
+nextSpace findMinimum(space *in, int adjList[][POSSIBLE_DIRECTIONS], int idx) {
+	int min = 9999;
+	int min_idx = -1;
+	int j;
+	const int WALL_COST = 3;
+	nextSpace next;
+	
+	// Find the best next step based on our index's neighbors.
+	for (j = 0; j < POSSIBLE_DIRECTIONS; ++j) {
+		if (adjList[idx][j] == -1 || in[adjList[idx][j]].state == VISITED)
+			continue;
+
+		if (j == 0) {
+			if (in[idx].up && min > WALL_COST) {
+				min = WALL_COST;
+				min_idx = adjList[idx][j];
+			}
+			else if (!in[idx].up && min > 1) {
+				min = 1;
+				min_idx = adjList[idx][j];
+			}
+		}
+		if (j == 1) { 
+			if (in[idx].down && WALL_COST <= min) { 
+				min = WALL_COST;
+				min_idx = adjList[idx][j];
+			}
+			else if (!in[idx].down && min > 1) {
+				min = 1;
+				min_idx = adjList[idx][j];
+			}
+		}
+		if (j == 2) {
+			if (in[idx].left && min > WALL_COST) {
+				min = WALL_COST;
+				min_idx = adjList[idx][j];
+			}
+			else if (!in[idx].left && min > 1) {
+				min = 1;
+				min_idx = adjList[idx][j];
+			}
+		}
+		if (j == 3) {
+			if (in[idx].right && min > WALL_COST) {
+				min = WALL_COST;
+				min_idx = adjList[idx][j];
+			}
+			else if (!in[idx].right && min > 1) {
+				min = 1;
+				min_idx = adjList[idx][j];
+			}
+		}
+	}
+
+	next.index = min_idx;
+	next.distance = min;
+
+	return next;
+}
+
+void shortestPath(space *in) {
+	int adjList[SPACE_LENGTH*SPACE_WIDTH][POSSIBLE_DIRECTIONS];
+	initializeAdjList(adjList);
+	int i = 0;
+	nextSpace next;
+	
+	// Iterate through the board until we reach the finish node.
+	while (!in[i].finish) {
+		int j;
+		int minimum = 99999;
+		
+		// Run greedy shortest path on all of the current space's neighbors.
+		/*
+		in[i].state = VISITED;
+		int tmp = i;
+		for (j = 0; j < POSSIBLE_DIRECTIONS; ++j) {
+			if (adjList[i][j] == -1)
+				continue;
+
+			next = findMinimum(in, adjList, i);
+			if (next.distance < minimum) {
+				i = next.index;
+			} 
+		}
+		*/
+
+		in[i].state = VISITED;
+		int tmp = i;
+		next = findMinimum(in, adjList, i);
+		i = next.index;
+
+		if (i == -1) {
+			i = in[tmp].parent;
+		}
+		else {
+			in[i].parent = tmp;
+			in[i].distance = in[in[i].parent].distance + next.distance;
+		}
+	}
+
+	printf("Total distance: %d\n", in[i].distance);
+	while (!in[i].start) {
+		printf("Space #%d\n", i);
+		i = in[i].parent;
+	}
+	printf("Space #%d\n", i);
+}
 
 int main(int argc, char const *argv[])
 {
@@ -215,6 +381,7 @@ int main(int argc, char const *argv[])
 
 
 	outputBoard(board);
+	shortestPath(board);
 
 	free(walls);
 	free(board);
