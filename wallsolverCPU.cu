@@ -157,7 +157,7 @@ void boardInit(space *board) {
 	// Initialize the board, blank
 	for (int i = 0; i < SPACE_LENGTH; i++) {
 
-	for (int j = 0; j < SPACE_WIDTH; j++) {
+		for (int j = 0; j < SPACE_WIDTH; j++) {
 			int idx = (i * SPACE_WIDTH) + j;
 			//board[idx] = blankSpace;
 
@@ -391,73 +391,84 @@ int shortestPath(space *in, int idxIn = 0) {
 /*
 
 */
-int moveWall(wall *in, int idx, wall newDir, int pos) {
+int moveWall(wall *in, int wallIdx, wall newDir, int pos) {
 	// Local copy of the walls
 	// Set the walls[idx] to the new direction
-	wall oldDir = in[idx];
+	wall oldDir = in[wallIdx];
 
-	bool sameDir = in[idx] == newDir;
+	bool sameDir = in[wallIdx] == newDir;
 
-	in[idx] = newDir;
-	bool collision = checkWallCollisions(in, idx);
+	in[wallIdx] = newDir;
+	bool collision = checkWallCollisions(in, wallIdx);
 
 	// If same direction or a collision
 	// Reset to old direction and return -1
 	if (sameDir || collision) {
-		in[idx] = oldDir;
+		in[wallIdx] = oldDir;
 		return -1;
 	}
 	
-	printf("-- moveWall: wallidx: %d --\n", idx);
+	printf("-- moveWall: wallidx: %d --\n", wallIdx);
 
 	space board[(SPACE_LENGTH * SPACE_WIDTH)];
 
 	boardInit(&board[0]);
 	generateBoard(&board[0], in);
+
 	shortestPath(&board[0], pos);
 
 	//free(board);
 
 	// Reset to the old direction
-	in[idx] = oldDir;
+	in[wallIdx] = oldDir;
 	
 	return 0;
 }
 
-void moveAllWalls(space *board, wall *walls, int playerIdx, int oppIdx, nextMove *results) {
+void moveAllWalls(space *inBoard, wall *walls, int playerIdx, int oppIdx, nextMove *results) {
 	int score = 0;
 
-	nextMove bestForPlayer = {shortestPath(board, playerIdx), playerIdx, -1, (wall) -1};
-	nextMove worstForOpponent = {shortestPath(board, oppIdx), oppIdx, -1, (wall) -1};
+	int playerScore = shortestPath(inBoard, playerIdx);
+	int oppScore = shortestPath(inBoard, oppIdx);
+	printf("Base scores - %d, %d\n", playerScore, oppScore);
 
+	// results[0] = best move for player	results[1] = worst move for opponent
+	results[0].score = playerScore;
+	results[0].nextSpace = playerIdx;
+	results[0].wallIdx = 0;
+	results[0].newDir = (wall) 0;
+
+	results[1].score = oppScore;
+	results[1].nextSpace = oppIdx;
+	results[1].wallIdx = 0;
+	results[1].newDir = (wall) 0;
+	
 	for (int i = 0; i < (WALL_LENGTH * WALL_WIDTH); i++) {
 
 		for (int j = 0; j < 3; j++) {
 			// Measure player value
 			score = moveWall(walls, i, (wall) j, playerIdx);
 
-			if (score < bestForPlayer.score) {
-				bestForPlayer.score = score;
-				bestForPlayer.nextSpace = playerIdx;
-				bestForPlayer.wallIdx = i;
-				bestForPlayer.newDir = (wall) j;
+			if (score < results[0].score) {
+				results[0].score = score;
+				results[0].nextSpace = playerIdx;
+				results[0].wallIdx = i;
+				results[0].newDir = (wall) j;
 			}
 
 			// Measure opponent value
 			score = moveWall(walls, i, (wall) j, oppIdx);
 
-			if (score > worstForOpponent.score) {
-				worstForOpponent.score = score;
-				worstForOpponent.nextSpace = oppIdx;
-				worstForOpponent.wallIdx = i;
-				worstForOpponent.newDir = (wall) j;
+			if (score > results[1].score) {
+				results[1].score = score;
+				results[1].nextSpace = oppIdx;
+				results[1].wallIdx = i;
+				results[1].newDir = (wall) j;
 			}
 		}
 
 	}
 
-	results[0] = bestForPlayer;
-	results[1] = worstForOpponent;
 }
 
 
@@ -472,6 +483,8 @@ int main(int argc, char const *argv[])
 
 	int numWalls = WALL_LENGTH * WALL_WIDTH;
 	int wallSize = sizeof(wall) * numWalls;
+
+	int resultsSize = sizeof(nextMove) * 2;
 
 	// Malloc the array of wall / board
 	wall *walls = (wall *)malloc(wallSize);
@@ -489,20 +502,24 @@ int main(int argc, char const *argv[])
 	gettimeofday(&startTime, &Idunno);
 
 	outputBoard(board);
-	shortestPath(board);
+	shortestPath(board, 0);
+	shortestPath(board, 0);
 
-
+	printf("-- Start finding best move --\n");
 	// results 0 = player 	1 = opponent
-	nextMove *results = (nextMove *) malloc(sizeof(nextMove) * 2);
+	nextMove *results = (nextMove *)malloc(resultsSize);
+
+	printf("DEBUG: successful malloc of results\n");
+
 	// board, walls, playerIdx to be moved to, current opponent idx, results
 	moveAllWalls(board, walls, 0, 0, results);
 
 	// Report the running time
-	report_running_time();
+	//report_running_time();
 
 	free(walls);
 	free(board);
-
+	free(results);
 
 
 
