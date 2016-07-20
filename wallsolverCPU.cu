@@ -317,24 +317,7 @@ void shortestPath(space *in) {
 	
 	// Iterate through the board until we reach the finish node.
 	while (!in[i].finish) {
-		int j;
-		int minimum = 99999;
-		
 		// Run greedy shortest path on all of the current space's neighbors.
-		/*
-		in[i].state = VISITED;
-		int tmp = i;
-		for (j = 0; j < POSSIBLE_DIRECTIONS; ++j) {
-			if (adjList[i][j] == -1)
-				continue;
-
-			next = findMinimum(in, adjList, i);
-			if (next.distance < minimum) {
-				i = next.index;
-			} 
-		}
-		*/
-
 		in[i].state = VISITED;
 		int tmp = i;
 		next = findMinimum(in, adjList, i);
@@ -355,6 +338,261 @@ void shortestPath(space *in) {
 		i = in[i].parent;
 	}
 	printf("Space #%d\n", i);
+}
+
+/* 
+***********************************************************
+*** Inputs: space *in (our board)                         *
+***         idx (the space # we're finding neighbors for) *
+***********************************************************
+*** Output: 12-element int array with indexes to all      *
+***         potential neighbors. -1 is entered for any    *
+***         elements that are unnecessary.                *
+***********************************************************
+*** Purpose: Find all possible neighbors a space can      *
+***          visit on the current turn. If a wall is      *
+***          encountered after a step is taken then the   *
+***          adjacent neighbors are added to the array.   *
+***********************************************************
+*/ 
+int* findNeighbors(space *in, int idx) {
+	int const NUM_NEIGHBORS = 12;
+	int *neighbors = (int *)malloc(NUM_NEIGHBORS*sizeof(int));
+	int const MAX_DISTANCE = 3;
+	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
+	int count = 0;
+	int i = idx;
+	int neighborIdx = 0;
+	int const WALL_COST = 3;
+
+	// Grab neighbors going up
+	while (count < MAX_DISTANCE) {
+		// Don't gather upward neighbors if index is in the top row.
+		if (idx < SPACE_WIDTH)
+			break;
+		
+		i -= SPACE_WIDTH;
+		if (i >= numSpaces || i < 0) {
+			break;
+		}
+		else if (in[i].down && count > 0) {
+			// Get left neighbors if we're reached a wall
+			i += SPACE_WIDTH;
+			int tmp = i;
+			int tmpCount = count;
+			while (count < MAX_DISTANCE) {
+				i--;
+
+				if (in[i].right || (i % SPACE_WIDTH) == 0) {
+					count += MAX_DISTANCE;
+					break;
+				}
+				else {
+					neighbors[neighborIdx++] = i;
+					count++;
+				}
+			}
+
+			// Get right neighbors if we've reached a wall
+			i = tmp;
+			count = tmpCount;
+			while (count < MAX_DISTANCE) {
+				i++;
+				
+				if (in[i].left || (i % SPACE_WIDTH == (SPACE_WIDTH - 1))) {
+					count += MAX_DISTANCE;
+					break;
+				}
+				else {
+					neighbors[neighborIdx++] = i;
+					count++;
+				}
+			}
+		}
+		else if (in[i].down && count == 0) {
+			count += WALL_COST;
+			neighbors[neighborIdx++] = i;
+		}
+		else {
+			count++;
+			neighbors[neighborIdx++] = i;
+		}
+	}
+
+	// Grab neighbors going down
+	count = 0;
+	i = idx;
+	while (count < MAX_DISTANCE) {
+		// Don't grab downward neighbors if index is in the bottom row.
+		if (i >= (numSpaces - SPACE_WIDTH))
+			break;
+
+		i += SPACE_WIDTH;
+		if (i >= numSpaces || i < 0) {
+			break;
+		}
+		else if (in[i].up && count > 0) {
+			// Get left neighbors if we're reached a wall
+			i -= SPACE_WIDTH;
+			int tmp = i;
+			int tmpCount = count;
+			while (count < MAX_DISTANCE) {
+				i--;
+
+				if (in[i].right || (i % SPACE_WIDTH) == 0) {
+					count += MAX_DISTANCE;
+					break;
+				}
+				else {
+					neighbors[neighborIdx++] = i;
+					count++;
+				}
+			}
+
+			// Get right neighbors if we've reached a wall
+			i = tmp;
+			count = tmpCount;
+			while (count < MAX_DISTANCE) {
+				i++;
+				
+				if (in[i].left || (i % SPACE_WIDTH == (SPACE_WIDTH - 1))) {
+					count += MAX_DISTANCE;
+					break;
+				}
+				else {
+					neighbors[neighborIdx++] = i;
+					count++;
+				}
+			}
+		}
+		else if (in[i].up && count == 0) {
+			count += WALL_COST;
+			neighbors[neighborIdx++] = i;
+		}
+		else {
+			count++;
+			neighbors[neighborIdx++] = i;
+		}
+ 
+	}
+
+	// Grab neighbors going left
+	count = 0;
+	i = idx;
+	while (count < MAX_DISTANCE) {
+		// Don't gather leftward neighbors if index is in the left column.
+		if ((idx % SPACE_WIDTH == 0))
+			break;
+		
+		i--;
+		if (i >= numSpaces || i < 0) {
+			break;
+		}
+		else if (in[i].right && count > 0) {
+			// Get up neighbors if we're reached a wall
+			i++;
+			int tmp = i;
+			int tmpCount = count;
+			while (count < MAX_DISTANCE) {
+				i -= SPACE_WIDTH;
+
+				if (i < 0 || in[i].down) {
+					count += MAX_DISTANCE;
+					break;
+				}
+				else {
+					neighbors[neighborIdx++] = i;
+					count++;
+				}
+			}
+
+			// Get down neighbors if we've reached a wall
+			i = tmp;
+			count = tmpCount;
+			while (count < MAX_DISTANCE) {
+				i += SPACE_WIDTH;
+				
+				if (in[i].up || (i >= (numSpaces - SPACE_WIDTH))) {
+					count += MAX_DISTANCE;
+					break;
+				}
+				else {
+					neighbors[neighborIdx++] = i;
+					count++;
+				}
+			}
+		}
+		else if (in[i].right && count == 0) {
+			count += WALL_COST;
+			neighbors[neighborIdx++] = i;
+		}
+		else {
+			count++;
+			neighbors[neighborIdx++] = i;
+		}
+	}
+
+	// Grab neighbors going right
+	count = 0;
+	i = idx;
+	while (count < MAX_DISTANCE) {
+		// Don't gather rightward neighbors if index is in the right column.
+		if (idx % SPACE_WIDTH == (SPACE_WIDTH - 1))
+			break;
+		
+		i++;
+		if (i >= numSpaces || i < 0) {
+			break;
+		}
+		else if (in[i].left && count > 0) {
+			// Get up neighbors if we're reached a wall
+			i--;
+			int tmp = i;
+			int tmpCount = count;
+			while (count < MAX_DISTANCE) {
+				i -= SPACE_WIDTH;
+
+				if (i < 0 || in[i].down) {
+					count += MAX_DISTANCE;
+					break;
+				}
+				else {
+					neighbors[neighborIdx++] = i;
+					count++;
+				}
+			}
+
+			// Get down neighbors if we've reached a wall
+			i = tmp;
+			count = tmpCount;
+			while (count < MAX_DISTANCE) {
+				i += SPACE_WIDTH;
+				
+				if (in[i].up || (i >= (numSpaces - SPACE_WIDTH))) {
+					count += MAX_DISTANCE;
+					break;
+				}
+				else {
+					neighbors[neighborIdx++] = i;
+					count++;
+				}
+			}
+		}
+		else if (in[i].left && count == 0) {
+			count += WALL_COST;
+			neighbors[neighborIdx++] = i;
+		}
+		else {
+			count++;
+			neighbors[neighborIdx++] = i;
+		}
+	}
+
+	// Set all unused spaces in our return array to -1 to indicate they don't exist
+	for (i = neighborIdx; i < NUM_NEIGHBORS; ++i)
+		neighbors[i] = -1;
+	
+	return neighbors;
 }
 
 int main(int argc, char const *argv[])
@@ -383,15 +621,11 @@ int main(int argc, char const *argv[])
 	outputBoard(board);
 	shortestPath(board);
 
+	// Get neighbors of a space
+	int *neighbors = findNeighbors(board, 7);
+
 	free(walls);
 	free(board);
-
-
-
-
-
-
-
 
 	return 0;
 }
