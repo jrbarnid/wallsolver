@@ -38,6 +38,13 @@ typedef struct nextSpace {
 	int distance;
 } nextSpace;
 
+typedef struct nextMove {
+	int score;
+	int nextSpace;
+	int wallIdx;
+	wall newDir;
+} nextMove;
+
 
 /* These are for an old way of tracking time */
 struct timezone Idunno;	
@@ -330,7 +337,7 @@ nextSpace findMinimum(space *in, int adjList[][POSSIBLE_DIRECTIONS], int idx) {
 	return next;
 }
 
-void shortestPath(space *in, int idxIn = 0) {
+int shortestPath(space *in, int idxIn = 0) {
 	int adjList[SPACE_LENGTH*SPACE_WIDTH][POSSIBLE_DIRECTIONS];
 	initializeAdjList(adjList);
 	int i = idxIn;
@@ -376,12 +383,14 @@ void shortestPath(space *in, int idxIn = 0) {
 		i = in[i].parent;
 	}
 	printf("Space #%d\n", i);
+
+	return in[i].distance;
 }
 
 /*
 
 */
-int moveWall(wall *in, int idx, wall newDir) {
+int moveWall(wall *in, int idx, wall newDir, int pos) {
 	// Local copy of the walls
 	// Set the walls[idx] to the new direction
 
@@ -400,7 +409,7 @@ int moveWall(wall *in, int idx, wall newDir) {
 
 	boardInit(board);
 	generateBoard(board, in);
-	shortestPath(board);
+	shortestPath(board, pos);
 
 	free(board);
 
@@ -410,16 +419,38 @@ int moveWall(wall *in, int idx, wall newDir) {
 	return 0;
 }
 
-void moveAllWalls(wall *walls) {
+void moveAllWalls(space *board, wall *walls, int playerIdx, int oppIdx, nextMove *results) {
+	int score = 0;
+	
+	nextMove bestForPlayer = {shortestPath(board, playerIdx), playerIdx, -1, -1};
+	nextMove worstForOpponent = {shortestPath(board, oppIdx), oppIdx, -1, -1};
 
 	for (int i = 0; i < (WALL_LENGTH * WALL_WIDTH); i++) {
 
 		for (int j = 0; j < 3; j++) {
-			moveWall(walls, i, (wall) j);
+			// Measure player value
+			score = moveWall(walls, i, (wall) j, playerIdx);
+			if (score < bestForPlayer.score) {
+				bestForPlayer.score = score;
+				bestForPlayer.nextSpace = playerIdx;
+				bestForPlayer.wallIdx = i;
+				bestForPlayer.newDir = (wall) j;
+			}
+
+			// Measure opponent value
+			score = moveWall(walls, i, (wall) j, oppIdx);
+			if (score > worstForOpponent.score) {
+				worstForOpponent.score = score;
+				worstForOpponent.nextSpace = oppIdx;
+				worstForOpponent.wallIdx = i;
+				worstForOpponent.newDir = (wall) j;
+			}
 		}
 
 	}
 
+	results[0] = bestForPlayer;
+	results[1] = worstForOpponent;
 }
 
 
@@ -453,7 +484,11 @@ int main(int argc, char const *argv[])
 	outputBoard(board);
 	shortestPath(board);
 
-	moveAllWalls(walls);
+
+	// results 0 = player 	1 = opponent
+	nextMove *results = (nextMove *) malloc(sizeof(nextMove) * 2);
+	// board, walls, playerIdx to be moved to, current opponent idx, results
+	moveAllWalls(board, walls, 0, 0, results);
 
 	// Report the running time
 	report_running_time();
