@@ -309,11 +309,26 @@ nextSpace findMinimum(space *in, int adjList[][POSSIBLE_DIRECTIONS], int idx) {
 	return next;
 }
 
+void resetSpaces(space *in) {
+	int i;
+	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
+
+	for (i = 0; i < numSpaces; ++i) {
+		in[i].parent = -1;
+		in[i].state = UNEXPLORED;
+	}
+	
+	return;
+}
+
 void shortestPath(space *in) {
 	int adjList[SPACE_LENGTH*SPACE_WIDTH][POSSIBLE_DIRECTIONS];
 	initializeAdjList(adjList);
 	int i = 0;
 	nextSpace next;
+
+	// If shortestPath is used multiple times then we need to reset the parent & state.
+	resetSpaces(in);
 	
 	// Iterate through the board until we reach the finish node.
 	while (!in[i].finish) {
@@ -620,12 +635,22 @@ int main(int argc, char const *argv[])
 
 	outputBoard(board);
 	shortestPath(board);
+	shortestPath(board);
 
 	// Get neighbors of a space
 	int *neighbors = findNeighbors(board, 7);
+	int i;
+	for (i = 0; i < 12; ++i) {
+		printf("Neighbors for space #7: %d\n", neighbors[i]);
+	}
+	neighbors = findNeighbors(board, 17);
+	for (i = 0; i < 12; ++i) {
+		printf("Neighbors for space #17: %d\n", neighbors[i]);
+	}
 
 	free(walls);
 	free(board);
+	free(neighbors);
 
 	return 0;
 }
