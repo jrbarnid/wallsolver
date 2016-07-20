@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+#include <sys/time.h>
 
 
 #define SPACE_LENGTH 5		// Spaces Size of rows / columns 
@@ -393,25 +394,29 @@ int shortestPath(space *in, int idxIn = 0) {
 int moveWall(wall *in, int idx, wall newDir, int pos) {
 	// Local copy of the walls
 	// Set the walls[idx] to the new direction
-
 	wall oldDir = in[idx];
 
-	// return -1 if the new dir = old dir
-	if (in[idx] == newDir) return -1;	
+	bool sameDir = in[idx] == newDir;
 
 	in[idx] = newDir;
-	// Return -1 if wall move results in collision
-	if ( checkWallCollisions(in, idx) ) in[idx] = oldDir; return -1;	
+	bool collision = checkWallCollisions(in, idx);
 
-	space *board = (space *) malloc( sizeof(space) * (SPACE_LENGTH * SPACE_WIDTH) );
-
+	// If same direction or a collision
+	// Reset to old direction and return -1
+	if (sameDir || collision) {
+		in[idx] = oldDir;
+		return -1;
+	}
+	
 	printf("-- moveWall: wallidx: %d --\n", idx);
 
-	boardInit(board);
-	generateBoard(board, in);
-	shortestPath(board, pos);
+	space board[(SPACE_LENGTH * SPACE_WIDTH)];
 
-	free(board);
+	boardInit(&board[0]);
+	generateBoard(&board[0], in);
+	shortestPath(&board[0], pos);
+
+	//free(board);
 
 	// Reset to the old direction
 	in[idx] = oldDir;
@@ -421,15 +426,16 @@ int moveWall(wall *in, int idx, wall newDir, int pos) {
 
 void moveAllWalls(space *board, wall *walls, int playerIdx, int oppIdx, nextMove *results) {
 	int score = 0;
-	
-	nextMove bestForPlayer = {shortestPath(board, playerIdx), playerIdx, -1, -1};
-	nextMove worstForOpponent = {shortestPath(board, oppIdx), oppIdx, -1, -1};
+
+	nextMove bestForPlayer = {shortestPath(board, playerIdx), playerIdx, -1, (wall) -1};
+	nextMove worstForOpponent = {shortestPath(board, oppIdx), oppIdx, -1, (wall) -1};
 
 	for (int i = 0; i < (WALL_LENGTH * WALL_WIDTH); i++) {
 
 		for (int j = 0; j < 3; j++) {
 			// Measure player value
 			score = moveWall(walls, i, (wall) j, playerIdx);
+
 			if (score < bestForPlayer.score) {
 				bestForPlayer.score = score;
 				bestForPlayer.nextSpace = playerIdx;
@@ -439,6 +445,7 @@ void moveAllWalls(space *board, wall *walls, int playerIdx, int oppIdx, nextMove
 
 			// Measure opponent value
 			score = moveWall(walls, i, (wall) j, oppIdx);
+
 			if (score > worstForOpponent.score) {
 				worstForOpponent.score = score;
 				worstForOpponent.nextSpace = oppIdx;
