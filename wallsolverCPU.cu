@@ -339,8 +339,6 @@ nextSpace findMinimum(space *in, int adjList[][POSSIBLE_DIRECTIONS], int idx) {
 }
 
 
-int shortestPath(space *in, int idxIn = 0) {
-
 void resetSpaces(space *in) {
 	int i;
 	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
@@ -353,7 +351,7 @@ void resetSpaces(space *in) {
 	return;
 }
 
-void shortestPath(space *in) {
+int shortestPath(space *in, int idxIn = 0) {
 
 	int adjList[SPACE_LENGTH*SPACE_WIDTH][POSSIBLE_DIRECTIONS];
 	initializeAdjList(adjList);
