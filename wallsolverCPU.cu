@@ -770,23 +770,11 @@ int main(int argc, char const *argv[])
 	printf("DEBUG: successful malloc of results\n");
 
 	// board, walls, playerIdx to be moved to, current opponent idx, results
-	moveAllWalls(board, walls, 0, 0, results);
+	//moveAllWalls(board, walls, 0, 0, results);
 
 	// Report the running time
 	//report_running_time();
 
-	free(walls);
-	free(board);
-	free(results);
-
-
-
-
-
-
-
-	shortestPath(board);
-	shortestPath(board);
 
 	// Get neighbors of a space
 	int *neighbors = findNeighbors(board, 7);
@@ -799,9 +787,12 @@ int main(int argc, char const *argv[])
 		printf("Neighbors for space #17: %d\n", neighbors[i]);
 	}
 
+
+
 	free(walls);
 	free(board);
 	free(neighbors);
+	free(results);
 
 
 	return 0;
