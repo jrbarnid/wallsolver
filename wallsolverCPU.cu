@@ -13,9 +13,11 @@
 
 #define SPACE_LENGTH 5		// Spaces Size of rows / columns 
 #define SPACE_WIDTH 5 
+#define NUM_SPACES 25
 
 #define WALL_LENGTH 4		// Walls size of rows/colums
 #define WALL_WIDTH 4	
+#define NUM_WALLS 16
 
 #define POSSIBLE_DIRECTIONS 4 	// Possible directions for traversing/finding neighbors
 
@@ -40,8 +42,9 @@ typedef struct nextSpace {
 } nextSpace;
 
 typedef struct nextMove {
-	int score;
-	int nextSpace;
+	int space;
+	int playerScore;
+	int oppScore;
 	int wallIdx;
 	wall newDir;
 } nextMove;
@@ -123,7 +126,7 @@ void generateBoard(space *board, wall *walls) {
 		for (int j = 0; j < WALL_LENGTH; j++) {
 			int idx = (i * WALL_LENGTH) + j;
 
-			printf("Maze Generated: %d - %d\n", idx, walls[idx]);
+			//printf("Maze Generated: %d - %d\n", idx, walls[idx]);
 
 			// Determine the 4 adjacent spaces to this wall
 			int TL = idx + i;
@@ -154,6 +157,7 @@ void generateBoard(space *board, wall *walls) {
 
 
 void boardInit(space *board) {
+	printf("Initialize Board\n");
 	// Initialize the board, blank
 	for (int i = 0; i < SPACE_LENGTH; i++) {
 
@@ -225,13 +229,27 @@ void outputBoard(space *in) {
 		for (int j = 0; j < SPACE_LENGTH; j++) {
 			int idx = (i * SPACE_WIDTH) + j;	// == board[i][j];
 
-			printf("Space #: %d, UP: %d, DOWN: %d, LEFT: %d, RIGHT: %d \n", idx, in[idx].up, in[idx].down, in[idx].left, in[idx].right);
+			printf("outputBoard: Space #: %d, UP: %d, DOWN: %d, LEFT: %d, RIGHT: %d \n", idx, in[idx].up, in[idx].down, in[idx].left, in[idx].right);
 
 		}
 
 	}
 
 }
+
+
+void outputResults(nextMove *results, int numResults) {
+	/*	Output the best valued move for each space
+	
+	*/
+	for (int i = 0; i < numResults; i++) {
+		printf("Best Move for Space %d\n", results[i].space);
+		printf("Move wall %d to direction %d\n", results[i].wallIdx, results[i].newDir);
+		printf("Player Score: %d, Opponent Score: %d\n\n", results[i].playerScore, results[i].oppScore);
+	}
+
+}
+
 
 /* Used strictly for debugging. This should not be used in the final version */
 void printAdjList(int adjList[][POSSIBLE_DIRECTIONS]) {
@@ -357,6 +375,7 @@ int shortestPath(space *in, int idxIn = 0) {
 	initializeAdjList(adjList);
 	int i = idxIn;
 	nextSpace next;
+	int distance;
 
 	// If shortestPath is used multiple times then we need to reset the parent & state.
 	resetSpaces(in);
@@ -378,25 +397,28 @@ int shortestPath(space *in, int idxIn = 0) {
 		}
 	}
 
-	printf("Total distance: %d\n", in[i].distance);
+	distance = in[i].distance;
+	printf("Total distance: %d\n", distance);
 	while (!in[i].start) {
 		printf("Space #%d\n", i);
 		i = in[i].parent;
 	}
 	printf("Space #%d\n", i);
 
-	return in[i].distance;
+	return distance;
 }
+
+
 
 /*
 
 */
-int moveWall(wall *in, int wallIdx, wall newDir, int pos) {
-	// Local copy of the walls
-	// Set the walls[idx] to the new direction
-	wall oldDir = in[wallIdx];
 
-	bool sameDir = in[wallIdx] == newDir;
+void moveWall(wall *in, int wallIdx, wall newDir, nextMove *move, int moveIdx, int oppPos) {
+
+	wall oldDir = in[wallIdx];			// Temp store the old wall direction
+
+	bool sameDir = in[wallIdx] == newDir;		// Set the walls[idx] to the new direction
 
 	in[wallIdx] = newDir;
 	bool collision = checkWallCollisions(in, wallIdx);
@@ -405,67 +427,54 @@ int moveWall(wall *in, int wallIdx, wall newDir, int pos) {
 	// Reset to old direction and return -1
 	if (sameDir || collision) {
 		in[wallIdx] = oldDir;
-		return -1;
+		return;
 	}
 	
-	printf("-- moveWall: wallidx: %d --\n", wallIdx);
+	printf("No collision - Space: %d, WallID: %d\n", move[moveIdx].space, wallIdx);
 
-	space board[(SPACE_LENGTH * SPACE_WIDTH)];
+	space *board = (space *)malloc(sizeof(space) * NUM_SPACES);
 
-	boardInit(&board[0]);
-	generateBoard(&board[0], in);
+	boardInit(board);
+	generateBoard(board, in);
 
-	shortestPath(&board[0], pos);
+	int playerScore = 0;
+	playerScore = shortestPath(board, move[moveIdx].space);
 
-	//free(board);
+	int oppScore = 0;
+	oppScore = shortestPath(board, oppPos);
+
+
+	printf("Space: %d, WallID: %d, Wall New Dir: %d, Player Score: %d, Opp Score: %d\n", move[moveIdx].space, wallIdx, newDir, playerScore, oppScore);
+
+
+	if (playerScore < move[moveIdx].playerScore || oppScore > move[moveIdx].oppScore) {
+		move[moveIdx].playerScore = playerScore;
+		move[moveIdx].oppScore = oppScore;
+		move[moveIdx].wallIdx = wallIdx;
+		move[moveIdx].newDir = newDir;
+	}
 
 	// Reset to the old direction
 	in[wallIdx] = oldDir;
+
+	free(board);
 	
-	return 0;
 }
 
 
-void moveAllWalls(space *inBoard, wall *walls, int playerIdx, int oppIdx, nextMove *results) {
-	int score = 0;
+void moveAllWalls(wall *walls, int oppIdx, nextMove *results, int resultsIdx) {
+	/*	For all walls, orient them each possible direction
+		Check for collisions or if same direction
+		If not, see if it changes the player or opponent's shortest path
 
-	int playerScore = shortestPath(inBoard, playerIdx);
-	int oppScore = shortestPath(inBoard, oppIdx);
-	printf("Base scores - %d, %d\n", playerScore, oppScore);
-
-	// results[0] = best move for player	results[1] = worst move for opponent
-	results[0].score = playerScore;
-	results[0].nextSpace = playerIdx;
-	results[0].wallIdx = 0;
-	results[0].newDir = (wall) 0;
-
-	results[1].score = oppScore;
-	results[1].nextSpace = oppIdx;
-	results[1].wallIdx = 0;
-	results[1].newDir = (wall) 0;
-	
+	*/
 	for (int i = 0; i < (WALL_LENGTH * WALL_WIDTH); i++) {
 
 		for (int j = 0; j < 3; j++) {
-			// Measure player value
-			score = moveWall(walls, i, (wall) j, playerIdx);
+			
+			// Check player (walls, wallID, direction, playerSpace, oppSpace)
+			moveWall(walls, i, (wall) j, results, resultsIdx, oppIdx);
 
-			if (score < results[0].score) {
-				results[0].score = score;
-				results[0].nextSpace = playerIdx;
-				results[0].wallIdx = i;
-				results[0].newDir = (wall) j;
-			}
-
-			// Measure opponent value
-			score = moveWall(walls, i, (wall) j, oppIdx);
-
-			if (score > results[1].score) {
-				results[1].score = score;
-				results[1].nextSpace = oppIdx;
-				results[1].wallIdx = i;
-				results[1].newDir = (wall) j;
-			}
 		}
 
 	}
@@ -734,6 +743,10 @@ int* findNeighbors(space *in, int idx) {
 
 int main(int argc, char const *argv[])
 {
+
+	int playerPos = 0;
+	int oppPos = 0;
+
 	
 	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
 	int spaceSize = sizeof(space) * numSpaces;
@@ -741,7 +754,7 @@ int main(int argc, char const *argv[])
 	int numWalls = WALL_LENGTH * WALL_WIDTH;
 	int wallSize = sizeof(wall) * numWalls;
 
-	int resultsSize = sizeof(nextMove) * 2;
+	
 
 	// Malloc the array of wall / board
 	wall *walls = (wall *)malloc(wallSize);
@@ -763,11 +776,9 @@ int main(int argc, char const *argv[])
 	shortestPath(board, 0);
 	shortestPath(board, 0);
 
-	printf("-- Start finding best move --\n");
-	// results 0 = player 	1 = opponent
-	nextMove *results = (nextMove *)malloc(resultsSize);
 
-	printf("DEBUG: successful malloc of results\n");
+
+
 
 	// board, walls, playerIdx to be moved to, current opponent idx, results
 	//moveAllWalls(board, walls, 0, 0, results);
@@ -787,12 +798,66 @@ int main(int argc, char const *argv[])
 		printf("Neighbors for space #17: %d\n", neighbors[i]);
 	}
 
+	neighbors = findNeighbors(board, playerPos);
+	for (i = 0; i < 12; ++i) {
+		printf("Neighbors for space #%d: %d\n", playerPos, neighbors[i]);
+	}
 
+
+	// Count the number of possible spaces = # of blocks
+	int possibleSpaces = 0;
+	for (int i = 0; i < 12; i++) {
+		if (neighbors[i] != -1) {
+			possibleSpaces++;
+		}
+	}
+
+	// Malloc an array nextMove[ # of neighbors ]
+	nextMove *moves = (nextMove *)malloc( sizeof(nextMove) * possibleSpaces );
+	printf("DEBUG: successful malloc of results\n");
+
+
+	// Zero-out the results array and set each move.space ot the neighbor space
+	int j = 0;
+	for (int i = 0; i < 12 && j < possibleSpaces; i++) {
+		if (neighbors[i] != -1) {
+			printf("Init results array. Moves[%d], Space: %d\n", j, neighbors[i]);
+
+			moves[j].space = neighbors[i];
+			moves[j].playerScore = 100;		// Intentionally high preset
+			moves[j].oppScore = -1;
+			moves[j].wallIdx = -1;
+			moves[j].newDir = (wall) 0;
+
+			j++;
+		}
+	}
+
+	/* start counting time */
+	gettimeofday(&startTime, &Idunno);
+
+
+	// Set the nextSpace in the array to each part in array
+	/*	For each possible space --> Move all 16 walls all possible direction
+		Determine the shortest path
+	*/
+	for (int i = 0; i < possibleSpaces; i++) {
+		moveAllWalls(walls, oppPos, moves, i);
+	}
+
+
+	/* check the total running time */ 
+	report_running_time();
+
+
+	
+	printf("----- RESULTS -----\n");
+	outputResults(moves, possibleSpaces);
 
 	free(walls);
 	free(board);
 	free(neighbors);
-	free(results);
+	free(moves);
 
 
 	return 0;
