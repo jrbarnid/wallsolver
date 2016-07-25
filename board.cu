@@ -56,12 +56,18 @@ CUDA_calculateShortestPath() {
 	Returns TRUE if there is a collision at wall IDX	
 */
 <<<<<<< HEAD
+<<<<<<< HEAD
 __device__ bool checkWallCollisions(wall *walls, int idx) {
 =======
+=======
+>>>>>>> master
 
 
 __device__ bool 
 CUDA_checkWallCollisions(wall *walls, int idx) {
+<<<<<<< HEAD
+>>>>>>> master
+=======
 >>>>>>> master
 	int i = idx / WALL_LENGTH;
 	int j = idx % WALL_WIDTH;
@@ -143,6 +149,48 @@ CUDA_generateBoardCUDA(space *board, wall *walls) {
 
 }
 
+__device__ void 
+CUDA_generateBoardCUDA(space *board, wall *walls) {
+	/* 	Generate the board
+		For each wall, identify the board spaces that it effects
+		Determine the effect of each affected space's mobility
+	*/
+	int numSpaces = WALL_LENGTH * WALL_WIDTH;
+
+	for (int i = 0; i < WALL_WIDTH; i++) {
+
+		for (int j = 0; j < WALL_LENGTH; j++) {
+			int idx = (i * WALL_LENGTH) + j;
+
+			printf("Maze Generated: %d - %d\n", idx, walls[idx]);
+
+			// Determine the 4 adjacent spaces to this wall
+			int TL = idx + i;
+			int TR = TL +1;
+			int BL = TL + SPACE_LENGTH;
+			int BR = BL +1;
+
+			if (board[TL].right) board[TL].right = (walls[idx] != UP);
+			if (board[TL].down) board[TL].down = (walls[idx] != LEFT);
+
+			if (board[TR].left) board[TR].left = board[TL].right;
+			if (board[TR].down) board[TR].down = (walls[idx] != RIGHT);
+
+			if (board[BL].right) board[BL].right = (walls[idx] != DOWN);
+			if (board[BL].up) board[BL].up = board[TL].down;
+
+			if (board[BR].left) board[BR].left = board[BL].right;
+			if (board[BR].up) board[BR].up = board[TR].down;
+
+		}
+
+	}
+
+	board[0].start = true;
+	board[numSpaces - 1].finish = true;
+
+}
+
 
 /*	Parallel coalesced board initialization
 	Blanks out the board
@@ -166,6 +214,7 @@ CUDA_boardInitParallel(space *board, int idx) {
 	board[idx].state = UNEXPLORED;
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 __device__ void
@@ -175,6 +224,15 @@ CUDA_boardInitSeq(space *board, int idx) {
 	int i = idx / WALL_LENGTH;
 	int j = idx % WALL_LENGTH;
 
+=======
+__device__ void
+CUDA_boardInitSeq(space *board, int idx) {
+	// mod = 0 == left edge space
+	// mod = 4 == right edge space
+	int i = idx / WALL_LENGTH;
+	int j = idx % WALL_LENGTH;
+
+>>>>>>> master
 	// Better to avoid divergence
 	board[idx].up = (i != 0);
 	board[idx].left = (j != 0);
@@ -244,6 +302,15 @@ CUDA_moveWallParallel2D(wall *in, int wallIdx, int newDir, int playerPos, int op
 	wall oldDir = in[wallIdx];
 	bool sameDir = in[wallIdx] == oldDir;
 
+<<<<<<< HEAD
+=======
+__device__ void 
+CUDA_moveWallParallel2D(wall *in, int wallIdx, int newDir, int playerPos, int oppPos) {
+
+	wall oldDir = in[wallIdx];
+	bool sameDir = in[wallIdx] == oldDir;
+
+>>>>>>> master
 	in[wallIdx] = newDir;
 	bool collision = CUDA_checkWallCollisions(in, wallIdx);
 

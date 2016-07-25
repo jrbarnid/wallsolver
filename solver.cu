@@ -14,6 +14,7 @@
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 __global__ void
 solveForAllWalls() {
 	int tidx = threadIdx.x;	// X-Dim = Wall
@@ -26,6 +27,8 @@ solveForAllWalls() {
 }
 
 =======
+=======
+>>>>>>> master
 /* Kernel
 
 */
@@ -50,6 +53,9 @@ calcBestMove() {
 
 
 
+<<<<<<< HEAD
+>>>>>>> master
+=======
 >>>>>>> master
 // CUDA Error Check
 void checkCudaError(cudaError_t e, char in[]) {
