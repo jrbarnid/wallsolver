@@ -55,20 +55,14 @@ CUDA_calculateShortestPath() {
 /*	Check if the current wall collides with neighboring walls
 	Returns TRUE if there is a collision at wall IDX	
 */
-<<<<<<< HEAD
-<<<<<<< HEAD
 __device__ bool checkWallCollisions(wall *walls, int idx) {
-=======
-=======
->>>>>>> master
+
+
 
 
 __device__ bool 
 CUDA_checkWallCollisions(wall *walls, int idx) {
-<<<<<<< HEAD
->>>>>>> master
-=======
->>>>>>> master
+
 	int i = idx / WALL_LENGTH;
 	int j = idx % WALL_WIDTH;
 
@@ -213,10 +207,8 @@ CUDA_boardInitParallel(space *board, int idx) {
 	board[idx].distance = 0;
 	board[idx].state = UNEXPLORED;
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
+
 __device__ void
 CUDA_boardInitSeq(space *board, int idx) {
 	// mod = 0 == left edge space
@@ -224,7 +216,7 @@ CUDA_boardInitSeq(space *board, int idx) {
 	int i = idx / WALL_LENGTH;
 	int j = idx % WALL_LENGTH;
 
-=======
+
 __device__ void
 CUDA_boardInitSeq(space *board, int idx) {
 	// mod = 0 == left edge space
@@ -232,7 +224,6 @@ CUDA_boardInitSeq(space *board, int idx) {
 	int i = idx / WALL_LENGTH;
 	int j = idx % WALL_LENGTH;
 
->>>>>>> master
 	// Better to avoid divergence
 	board[idx].up = (i != 0);
 	board[idx].left = (j != 0);
@@ -293,7 +284,6 @@ CUDA_moveWallParallel(wall *in, int idx, int playerIdx, int oppIdx, nextMove *re
 	}
 
 }
->>>>>>> master
 
 
 __device__ void 
@@ -302,15 +292,13 @@ CUDA_moveWallParallel2D(wall *in, int wallIdx, int newDir, int playerPos, int op
 	wall oldDir = in[wallIdx];
 	bool sameDir = in[wallIdx] == oldDir;
 
-<<<<<<< HEAD
-=======
+
 __device__ void 
 CUDA_moveWallParallel2D(wall *in, int wallIdx, int newDir, int playerPos, int oppPos) {
 
 	wall oldDir = in[wallIdx];
 	bool sameDir = in[wallIdx] == oldDir;
 
->>>>>>> master
 	in[wallIdx] = newDir;
 	bool collision = CUDA_checkWallCollisions(in, wallIdx);
 
