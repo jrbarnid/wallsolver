@@ -12,6 +12,18 @@
 
 
 
+
+__global__ void
+solveForAllWalls() {
+	int tidx = threadIdx.x;	// X-Dim = Wall
+	int tidy = threadIdx.y;	// Y-Dim = Direction
+	int space = blockIdx.x;	// Space #
+
+	// 
+
+
+}
+
 // CUDA Error Check
 void checkCudaError(cudaError_t e, char in[]) {
 	if (e != cudaSuccess) {
