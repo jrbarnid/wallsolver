@@ -12,6 +12,31 @@
 
 
 
+
+/* Kernel
+
+*/
+__global__ void
+calcBestMove() {
+	int gtid, block, tidx, tidy;
+	tidx = threadIdx.x;
+	tidy = threadIdx.y;
+	block = blockIdx.x;
+
+	gtid = block * blockDim.x + tidx + tidy;
+	
+	// Block = Space
+	// x = tid.x 	wall
+	// y = tid.y	wall direction 0 - 4
+
+	// moveWall (walls, tid, newDir, position)
+
+	CUDA_moveWallParallel2D(walls,)
+
+}
+
+
+
 // CUDA Error Check
 void checkCudaError(cudaError_t e, char in[]) {
 	if (e != cudaSuccess) {
