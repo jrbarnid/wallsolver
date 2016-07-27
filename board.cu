@@ -1,3 +1,6 @@
+#ifndef BOARD_CU
+#define BOARD_CU
+
 /*
 	Basic board functions and data structures 
 
@@ -7,58 +10,19 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <cuda_runtime.h>
-
-
-#define SPACE_LENGTH 5		// Spaces Size of rows / columns 
-#define SPACE_WIDTH 5 
-
-#define WALL_LENGTH 4		// Walls size of rows/colums
-#define WALL_WIDTH 4	
-
-#define POSSIBLE_DIRECTIONS 4 	// Possible directions for traversing/finding neighbors
-
-typedef enum wall {
-	UP, DOWN, LEFT, RIGHT
-} wall;
-
-typedef enum status {
-	UNEXPLORED, VISITED, EXPLORED
-} status;
-
-typedef struct space {
-	bool up, down, left, right, start, finish;
-	int parent;
-	int distance;
-	status state;
-} space;
-
-typedef struct nextSpace {
-	int index;
-	int distance;
-} nextSpace;
-
-typedef struct nextMove {
-	int score;
-	int nextSpace;
-	int wallIdx;
-	wall newDir;
-} nextMove;
+#include "boardCPU.cu"
 
 
 
-__global__ void
-CUDA_calculateShortestPath() {
+__device__ int
+CUDA_shortestPath(space *board, int pos) {
 
-
+	return 0;
 }
 
 /*	Check if the current wall collides with neighboring walls
 	Returns TRUE if there is a collision at wall IDX	
 */
-__device__ bool checkWallCollisions(wall *walls, int idx) {
-
-
-
 
 __device__ bool 
 CUDA_checkWallCollisions(wall *walls, int idx) {
@@ -102,7 +66,7 @@ CUDA_checkWallCollisions(wall *walls, int idx) {
 
 
 __device__ void 
-CUDA_generateBoardCUDA(space *board, wall *walls) {
+CUDA_generateBoard(space *board, wall *walls) {
 	/* 	Generate the board
 		For each wall, identify the board spaces that it effects
 		Determine the effect of each affected space's mobility
@@ -143,55 +107,17 @@ CUDA_generateBoardCUDA(space *board, wall *walls) {
 
 }
 
-__device__ void 
-CUDA_generateBoardCUDA(space *board, wall *walls) {
-	/* 	Generate the board
-		For each wall, identify the board spaces that it effects
-		Determine the effect of each affected space's mobility
-	*/
-	int numSpaces = WALL_LENGTH * WALL_WIDTH;
-
-	for (int i = 0; i < WALL_WIDTH; i++) {
-
-		for (int j = 0; j < WALL_LENGTH; j++) {
-			int idx = (i * WALL_LENGTH) + j;
-
-			printf("Maze Generated: %d - %d\n", idx, walls[idx]);
-
-			// Determine the 4 adjacent spaces to this wall
-			int TL = idx + i;
-			int TR = TL +1;
-			int BL = TL + SPACE_LENGTH;
-			int BR = BL +1;
-
-			if (board[TL].right) board[TL].right = (walls[idx] != UP);
-			if (board[TL].down) board[TL].down = (walls[idx] != LEFT);
-
-			if (board[TR].left) board[TR].left = board[TL].right;
-			if (board[TR].down) board[TR].down = (walls[idx] != RIGHT);
-
-			if (board[BL].right) board[BL].right = (walls[idx] != DOWN);
-			if (board[BL].up) board[BL].up = board[TL].down;
-
-			if (board[BR].left) board[BR].left = board[BL].right;
-			if (board[BR].up) board[BR].up = board[TR].down;
-
-		}
-
-	}
-
-	board[0].start = true;
-	board[numSpaces - 1].finish = true;
-
-}
 
 
 /*	Parallel coalesced board initialization
 	Blanks out the board
-	idx = threadidx.x
+	idx = space to solve for
 */
 __device__ void
 CUDA_boardInitParallel(space *board, int idx) {
+
+	if (idx >= NUM_SPACES) return;
+
 	// mod = 0 == left edge space
 	// mod = 4 == right edge space
 	int i = idx / WALL_LENGTH;
@@ -209,13 +135,6 @@ CUDA_boardInitParallel(space *board, int idx) {
 }
 
 
-__device__ void
-CUDA_boardInitSeq(space *board, int idx) {
-	// mod = 0 == left edge space
-	// mod = 4 == right edge space
-	int i = idx / WALL_LENGTH;
-	int j = idx % WALL_LENGTH;
-
 
 __device__ void
 CUDA_boardInitSeq(space *board, int idx) {
@@ -234,93 +153,17 @@ CUDA_boardInitSeq(space *board, int idx) {
 	board[idx].distance = 0;
 	board[idx].state = UNEXPLORED;
 }
-/*
-	tid = wall to be moved and tested
-
-*/
-__device__ void
-CUDA_moveWallParallel(wall *in, int idx, int playerIdx, int oppIdx, nextMove *results) {
-
-	for (int j = 0; j < 3; j++) {
-		// Local copy of the walls
-		// Set the walls[idx] to the new direction
-		wall oldDir = in[idx];
-
-		bool sameDir = in[idx] == (wall) j;
-
-		in[idx] = newDir;
-		bool collision = checkWallCollisions(in, idx);
-
-		// If NOT sameDir OR Collision
-		if (!(sameDir || collision)) {
-
-			space board[(SPACE_LENGTH * SPACE_WIDTH)];
-
-			boardInitSeq(&board[0]);
-			generateBoardCUDA(&board[0], in);
-
-			int playerScore = shortestPath(board, playerIdx);
-			int oppScore = shortestPath(board, oppIdx);
-			
-			if (score < results[0].score) {
-				results[0].score = score;
-				results[0].nextSpace = playerIdx;
-				results[0].wallIdx = i;
-				results[0].newDir = (wall) j;
-			}
-
-			if (score > results[1].score) {
-				results[1].score = score;
-				results[1].nextSpace = oppIdx;
-				results[1].wallIdx = i;
-				results[1].newDir = (wall) j;
-			}
-			
-		}
-
-		// Reset to the old direction
-		in[idx] = oldDir;
-
-	}
-
-}
-
-
-__device__ void 
-CUDA_moveWallParallel2D(wall *in, int wallIdx, int newDir, int playerPos, int oppPos) {
-
-	wall oldDir = in[wallIdx];
-	bool sameDir = in[wallIdx] == oldDir;
-
-
-__device__ void 
-CUDA_moveWallParallel2D(wall *in, int wallIdx, int newDir, int playerPos, int oppPos) {
-
-	wall oldDir = in[wallIdx];
-	bool sameDir = in[wallIdx] == oldDir;
-
-	in[wallIdx] = newDir;
-	bool collision = CUDA_checkWallCollisions(in, wallIdx);
-
-	/* 	If not the same direction or nor collisions
-		
-	*/
-	if (!(sameDir || collision)) {
-		space board[SPACE_LENGTH * SPACE_WIDTH];
-
-		CUDA_boardInitSeq(&board[0]);
-		CUDA_generateBoardCUDA(&board[0]);
-
-		int playerScore = shortestPath(&board[0], playerPos);
-		int oppScore = shortestPath(&board[0], oppPos);
-
-	}
-
-	in[wallIdx] = oldDir;
-}
 
 
 
 
 
 
+
+
+
+
+
+
+
+#endif // BOARD_CU
