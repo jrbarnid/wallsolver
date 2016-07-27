@@ -741,6 +741,38 @@ int* findNeighbors(space *in, int idx) {
 }
 
 
+int getPossibleMoves(space *board, int pos, nextMove *in) {
+	// Counter number of possible spaces @ pos
+	int *neighbors = findNeighbors(board, pos);
+
+	int possibleSpaces = 0;
+	for(int i = 0; i < 12; i++) {
+		printf("Neighbors for space %d: %d\n", pos, neighbors[i]);
+
+		if (neighbors[i] != -1) possibleSpaces++;
+	}
+
+	in = (nextMove *) malloc( sizeof(nextMove) * possibleSpaces );
+
+	int j = 0;
+	for(int i = 0; i < 12 && j < possibleSpaces; i++) {
+		if (neighbors[i] == -1 ) break;
+
+		in[j].space = neighbors[i];
+		in[j].playerScore = 100;		// Intentionally high preset
+		in[j].oppScore = -1;
+		in[j].wallIdx = -1;
+		in[j].newDir = (wall) 0;
+
+		j++;
+
+	}
+
+	return possibleSpaces;
+}
+
+
+
 int main(int argc, char const *argv[])
 {
 
@@ -804,6 +836,7 @@ int main(int argc, char const *argv[])
 	}
 
 
+	
 	// Count the number of possible spaces = # of blocks
 	int possibleSpaces = 0;
 	for (int i = 0; i < 12; i++) {
@@ -832,6 +865,10 @@ int main(int argc, char const *argv[])
 			j++;
 		}
 	}
+	
+	// TODO: DEBUG this function
+	//nextMove *moves = NULL;
+	//int possibleSpaces = getPossibleMoves(board, playerPos, moves);
 
 	/* start counting time */
 	gettimeofday(&startTime, &Idunno);
