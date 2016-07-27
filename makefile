@@ -6,5 +6,5 @@ all: testCPU testCUDA
 testCPU: wallsolverCPU.cu
 	nvcc wallsolverCPU.cu -o testCPU
 
-testCUDA: board.cu boardCPU.cu solver.cu 
-	nvcc board.cu boardCPU.cu solver.cu -o testCUDA
+testCUDA: boardCPU.cu board.cu solver.cu
+	nvcc boardCPU.cu board.cu solver.cu -o testCUDA
