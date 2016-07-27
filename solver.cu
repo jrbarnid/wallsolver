@@ -11,20 +11,6 @@
 #include "board.cu"
 
 
-#define SPACE_LENGTH 5		// Spaces Size of rows / columns 
-#define SPACE_WIDTH 5 
-#define NUM_SPACES 25
-
-#define WALL_LENGTH 4		// Walls size of rows/colums
-#define WALL_WIDTH 4	
-#define NUM_WALLS 16
-
-#define POSSIBLE_DIRECTIONS 4 	// Possible directions for traversing/finding neighbors
-
-
-
-
-
 /*	Parallel version of moveAllWalls. 
 	2D thread array. 
 	Input: walls, moves, opponentIdx
@@ -38,23 +24,23 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 
 	// Coalesced Load d_walls Global --> Shared for this Block
 	// Only threads (0-15, 0)
-	__shared__ wall sm_walls[NUM_WALLS];
+	__shared__ wall sharedWalls[NUM_WALLS];
 
 	if (tidy == 0) {
-		sm_walls[tidx] = d_walls[tidx];
+		sharedWalls[tidx] = d_walls[tidx];
 	}
 
 	// Create a blank board template --> Shared for this block
 	// Only threads (0-15, 1)
-	__shared__ space sm_boardTemplate[NUM_SPACES];
+	extern __shared__ space sharedBoardTemplate[];
 
 	// Spaces 0-15	First 16 spaces
 	if (tidy == 1) {
-		CUDA_boardInitParallel(&sm_boardTemplate, tidx);
+		CUDA_boardInitParallel(&sharedBoardTemplate, tidx);
 	}
 	// Spaces 16-29
 	if (tidy = 2 && (tidx + 16) < NUM_SPACES) {
-		CUDA_boardInitParallel(&sm_boardTemplate, (tidx + 16));
+		CUDA_boardInitParallel(&sharedBoardTemplate, (tidx + NUM_WALLS));
 	}
 
 	// Create shared move, global --> shared
@@ -91,14 +77,14 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 
 	// Each thread makes local copy of walls
 	wall l_walls[NUM_WALLS];
-	memcpy(&l_walls, sm_walls, (sizeof(walls) * NUM_WALLS));
+	memcpy(&l_walls, sharedWalls, (sizeof(wall) * NUM_WALLS));
 
 
 	// Check for wall collisions && if it's the same direction
 	wall oldDir = l_walls[tidx];
 
 	bool sameDir = (oldDir == (wall)tidy);
-	bool collision = CUDA_checkWallCollisions(&l_walls, tidx);
+	bool collision = CUDA_checkWallCollisions(&l_walls[0], tidx);
 
 	if (sameDir || collision) {
 		// Do nothing and return
@@ -160,6 +146,8 @@ void checkCudaError(cudaError_t e, char in[]) {
 
 int main(int argc, char const *argv[])
 {
+	int playerPos = 0;
+	int oppPos = 0;
 	
 	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
 	size_t spaceSize = sizeof(space) * numSpaces;
@@ -167,33 +155,38 @@ int main(int argc, char const *argv[])
 	int numWalls = WALL_LENGTH * WALL_WIDTH;
 	size_t wallSize = sizeof(wall) * numWalls;
 
+
 	// Malloc the array of wall / board
 	wall *walls = (wall *)malloc(wallSize);
 	space *board = (space *)malloc(spaceSize);
 
 
-	// Initialize, zero out the board 
+
+	// Initialize and setup the current board state
 	boardInit(board);
-	// Generate walls 
 	generateWalls(walls);
 	generateBoard(board, walls);
 
 
+	// Find nearest neighbors to player
+
+
+	// Determine the number of spaces around the player
+
+
+	// Malloc memory to store next possible moves
+
+
 
 	// Malloc space on device, copy to device
-	walls *d_walls = NULL;
-	space *d_board = NULL;
+	wall *d_walls = NULL;
 
 	checkCudaError( cudaMalloc((void**) &d_walls, wallSize), 
-		"Malloc Histogram");
-	checkCudaError( cudaMalloc((void**) &d_board, spaceSize), 
-		"Malloc Atom List");
+		"Malloc d_walls");
 
-	checkCudaError( cudaMemcpy(d_histogram, histogram, histogramSize, cudaMemcpyHostToDevice), 
-		"Copy histogram to Device");
-	checkCudaError( cudaMemcpy(d_atom_list, atom_list, atomSize, cudaMemcpyHostToDevice), 
-		"Copy atom_list to Device");
-
+	// cudaMemcpy(target, source, size, function)
+	checkCudaError( cudaMemcpy(d_walls, walls, wallSize, cudaMemcpyHostToDevice), 
+		"Copy walls to device");
 
 
 
