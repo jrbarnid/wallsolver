@@ -1,3 +1,6 @@
+#ifndef BOARD_CPU_CU
+#define BOARD_CPU_CU
+
 /*	CPU Based Wallsolver 
 
 	nvcc wallsolverCPU.cu -o testCPU
@@ -9,10 +12,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <sys/time.h>
-
-
-
-
 
 
 #define SPACE_LENGTH 5		// Spaces Size of rows / columns 
@@ -57,7 +56,6 @@ typedef struct nextMove {
 /* These are for an old way of tracking time */
 struct timezone Idunno;	
 struct timeval startTime, endTime;
-
 
 /* 
 	set a checkpoint and show the (natural) running time in seconds 
@@ -746,174 +744,9 @@ int* findNeighbors(space *in, int idx) {
 }
 
 
-nextMove *getPossibleMoves(space *board, int pos, int *numSpaces) {
-	// Counter number of possible spaces @ pos
-	int *neighbors = findNeighbors(board, pos);
-
-
-	int possibleSpaces = 0;
-	for(int i = 0; i < 12; i++) {
-		printf("Neighbors for space %d: %d\n", pos, neighbors[i]);
-
-		if (neighbors[i] != -1) possibleSpaces++;
-	}
-
-	nextMove *moves = (nextMove *) malloc( sizeof(nextMove) * possibleSpaces );
-
-	int j = 0;
-	for(int i = 0; i < 12 && j < possibleSpaces; i++) {
-		if (neighbors[i] == -1 ) break;
-
-		moves[j].space = neighbors[i];
-		moves[j].playerScore = 100;		// Intentionally high preset
-		moves[j].oppScore = -1;
-		moves[j].wallIdx = -1;
-		moves[j].newDir = (wall) 0;
-
-		j++;
-
-	}
-
-	free(neighbors);
-
-	//numSpaces = possibleSpaces;
-	return moves;
-}
 
 
 
-int main(int argc, char const *argv[])
-{
-
-	int playerPos = 0;
-	int oppPos = 0;
-
-	
-	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
-	int spaceSize = sizeof(space) * numSpaces;
-
-	int numWalls = WALL_LENGTH * WALL_WIDTH;
-	int wallSize = sizeof(wall) * numWalls;
-
-	
-
-	// Malloc the array of wall / board
-	wall *walls = (wall *)malloc(wallSize);
-	space *board = (space *)malloc(spaceSize);
-
-	// Initialize, zero out the board 
-	boardInit(board);
-
-	// Generate walls 
-	generateWalls(walls);
-
-	generateBoard(board, walls);
-
-	// Start the timer
-	gettimeofday(&startTime, &Idunno);
-
-	outputBoard(board);
-
-	// Testing
-	//shortestPath(board, 0);
-	//shortestPath(board, 0);
 
 
-	// board, walls, playerIdx to be moved to, current opponent idx, results
-	//moveAllWalls(board, walls, 0, 0, results);
-
-	// Report the running time
-	//report_running_time();
-
-
-	// Get neighbors of a space
-	
-	int *neighbors = findNeighbors(board, 7);
-	int i;
-	for (i = 0; i < 12; ++i) {
-		printf("Neighbors for space #7: %d\n", neighbors[i]);
-	}
-	neighbors = findNeighbors(board, 17);
-	for (i = 0; i < 12; ++i) {
-		printf("Neighbors for space #17: %d\n", neighbors[i]);
-	}
-
-	neighbors = findNeighbors(board, playerPos);
-	for (i = 0; i < 12; ++i) {
-		printf("Neighbors for space #%d: %d\n", playerPos, neighbors[i]);
-	}
-
-
-	
-	// Count the number of possible spaces = # of blocks
-	int possibleSpaces = 0;
-	for (int i = 0; i < 12; i++) {
-		if (neighbors[i] != -1) {
-			possibleSpaces++;
-		}
-	}
-
-	// Malloc an array nextMove[ # of neighbors ]
-	nextMove *moves = (nextMove *)malloc( sizeof(nextMove) * possibleSpaces );
-	printf("DEBUG: successful malloc of results\n");
-
-
-	// Zero-out the results array and set each move.space ot the neighbor space
-	int j = 0;
-	for (int i = 0; i < 12 && j < possibleSpaces; i++) {
-		if (neighbors[i] != -1) {
-			printf("Init results array. Moves[%d], Space: %d\n", j, neighbors[i]);
-
-			moves[j].space = neighbors[i];
-			moves[j].playerScore = 100;		// Intentionally high preset
-			moves[j].oppScore = -1;
-			moves[j].wallIdx = -1;
-			moves[j].newDir = (wall) 0;
-
-			j++;
-		}
-	}
-
-	
-
-	// TODO: DEBUG this function
-	//int *possibleSpaces = getPossibleMoves(board, playerPos, possibleSpaces);
-
-
-
-	/* start counting time */
-	gettimeofday(&startTime, &Idunno);
-
-
-	// Set the nextSpace in the array to each part in array
-	/*	For each possible space --> Move all 16 walls all possible direction
-		Determine the shortest path
-	*/
-	for (int i = 0; i < possibleSpaces; i++) {
-		moveAllWalls(walls, oppPos, moves, i);
-	}
-
-
-	/* check the total running time */ 
-	report_running_time();
-
-
-	
-	
-	outputResults(moves, possibleSpaces);
-
-
-	printf("Memory Sizes - walls: %d, board: %d, nextMove (maximum): %d, neighbors: %d\n", wallSize, spaceSize, sizeof(nextMove)*12, sizeof(neighbors));
-
-	free(walls);
-	free(board);
-	//free(possibleSpaces);
-	free(neighbors);
-	free(moves);
-
-
-	return 0;
-}
-
-
-
+#endif // BOARD_CPU_CU
