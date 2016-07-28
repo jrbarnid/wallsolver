@@ -160,24 +160,54 @@ int main(int argc, char const *argv[])
 
 
 	// Find nearest neighbors to player
-
+	int *neighbors = findNeighbors(board, playerPos);
 
 	// Determine the number of spaces around the player
+	// Count the number of possible spaces = # of blocks
+	int possibleSpaces = 0;
+	for (int i = 0; i < 12; i++) {
+		if (neighbors[i] != -1) {
+			possibleSpaces++;
+		}
+	}
 
+	// Malloc an array nextMove[ # of neighbors ]
+	nextMove *moves = (nextMove *)malloc( sizeof(nextMove) * possibleSpaces );
 
-	// Malloc memory to store next possible moves
+	// Zero-out the results array and set each move.space ot the neighbor space
+	int j = 0;
+	for (int i = 0; i < 12 && j < possibleSpaces; i++) {
+		if (neighbors[i] != -1) {
+			printf("Init results array. Moves[%d], Space: %d\n", j, neighbors[i]);
+
+			moves[j].space = neighbors[i];
+			moves[j].playerScore = 100;		// Intentionally high preset
+			moves[j].oppScore = -1;
+			moves[j].wallIdx = -1;
+			moves[j].newDir = (wall) 0;
+
+			j++;
+		}
+	}
+
 
 
 
 	// Malloc space on device, copy to device
 	wall *d_walls = NULL;
+	nextMove *d_moves = NULL;
 
 	checkCudaError( cudaMalloc((void**) &d_walls, wallSize), 
+		"Malloc d_walls");
+	checkCudaError( cudaMalloc((void**) &d_moves, (sizeof(nextMove) * possibleSpaces) ), 
 		"Malloc d_walls");
 
 	// cudaMemcpy(target, source, size, function)
 	checkCudaError( cudaMemcpy(d_walls, walls, wallSize, cudaMemcpyHostToDevice), 
 		"Copy walls to device");
+	checkCudaError( cudaMemcpy(d_moves, moves, (sizeof(nextMove) * possibleSpaces), cudaMemcpyHostToDevice), 
+		"Copy walls to device");
+
 
 
 
@@ -187,8 +217,13 @@ int main(int argc, char const *argv[])
 	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
 
-	// CUDA Kernel Call
-	//PDH_baseline <<<ceil(PDH_acnt/32), 32>>> (d_histogram, d_atom_list, PDH_res, PDH_acnt);
+	/*	Kernel Call
+		Blocks = possible spaces
+		Threads = #walls * #possible directions
+
+	*/
+	dim3 grid(16,4);
+	CUDA_solveForAllWalls <<<possibleSpaces, grid>>> (d_walls, d_moves, oppPos);
 
 	checkCudaError(cudaGetLastError(), "Checking Last Error, Kernel Launch");
 
@@ -204,6 +239,10 @@ int main(int argc, char const *argv[])
 
 
 
+	// Free Memory
+	free(board);
+	free(walls);
+	free(moves);
 
 	return 0;
 }
