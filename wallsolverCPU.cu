@@ -745,7 +745,7 @@ int* findNeighbors(space *in, int idx) {
 }
 
 
-int getPossibleMoves(space *board, int pos, int *numSpaces) {
+nextMove *getPossibleMoves(space *board, int pos, int *numSpaces) {
 	// Counter number of possible spaces @ pos
 	int *neighbors = findNeighbors(board, pos);
 
@@ -763,19 +763,19 @@ int getPossibleMoves(space *board, int pos, int *numSpaces) {
 	for(int i = 0; i < 12 && j < possibleSpaces; i++) {
 		if (neighbors[i] == -1 ) break;
 
-		in[j].space = neighbors[i];
-		in[j].playerScore = 100;		// Intentionally high preset
-		in[j].oppScore = -1;
-		in[j].wallIdx = -1;
-		in[j].newDir = (wall) 0;
+		moves[j].space = neighbors[i];
+		moves[j].playerScore = 100;		// Intentionally high preset
+		moves[j].oppScore = -1;
+		moves[j].wallIdx = -1;
+		moves[j].newDir = (wall) 0;
 
 		j++;
 
 	}
 
 	free(neighbors);
-	
-	numSpaces = possibleSpaces;
+
+	//numSpaces = possibleSpaces;
 	return moves;
 }
 
@@ -813,11 +813,9 @@ int main(int argc, char const *argv[])
 
 	outputBoard(board);
 
-	shortestPath(board, 0);
-	shortestPath(board, 0);
-
-
-
+	// Testing
+	//shortestPath(board, 0);
+	//shortestPath(board, 0);
 
 
 	// board, walls, playerIdx to be moved to, current opponent idx, results
@@ -828,7 +826,7 @@ int main(int argc, char const *argv[])
 
 
 	// Get neighbors of a space
-	/*
+	
 	int *neighbors = findNeighbors(board, 7);
 	int i;
 	for (i = 0; i < 12; ++i) {
@@ -875,11 +873,12 @@ int main(int argc, char const *argv[])
 		}
 	}
 
-	*/
+	
 
 	// TODO: DEBUG this function
-	int *possibleSpaces = (int *)malloc(sizeof(int));
-	nextMove *moves = getPossibleMoves(board, playerPos, possibleSpaces);
+	//int *possibleSpaces = getPossibleMoves(board, playerPos, possibleSpaces);
+
+
 
 	/* start counting time */
 	gettimeofday(&startTime, &Idunno);
@@ -907,8 +906,8 @@ int main(int argc, char const *argv[])
 
 	free(walls);
 	free(board);
-	free(possibleSpaces);
-	//free(neighbors);
+	//free(possibleSpaces);
+	free(neighbors);
 	free(moves);
 
 
