@@ -14,12 +14,6 @@
 
 
 
-__device__ int
-CUDA_shortestPath(space *board, int pos) {
-
-	return 0;
-}
-
 /*	Check if the current wall collides with neighboring walls
 	Returns TRUE if there is a collision at wall IDX	
 */
@@ -158,7 +152,167 @@ CUDA_boardInitSeq(space *board) {
 
 }
 
+/* Used strictly for debugging. This should not be used in the final version */
+__device__ void 
+CUDA_printAdjList(int adjList[][POSSIBLE_DIRECTIONS]) {
+	int i = 0;
+	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
 
+	for (i = 0; i < numSpaces; ++i) {
+		printf("Space #%d's neighbors: UP: %d, DOWN: %d, LEFT: %d, RIGHT: %d \n", i, 
+				adjList[i][0], adjList[i][1], adjList[i][2], adjList[i][3]);
+	}
+}
+
+/* Set all neighbors to -1, then cycle through and add neighbors for each space
+   All spaces marked with -1 afterwards means the neighbor is invalid and can be ignored
+*/
+__device__ void 
+CUDA_initializeAdjList(int adjList[][POSSIBLE_DIRECTIONS]) {
+	int i = 0;
+	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
+
+	for (i = 0; i < numSpaces; ++i) {
+		int j;
+		for (j = 0; j < POSSIBLE_DIRECTIONS; ++j) {
+			adjList[i][j] = -1;
+		}
+	}
+	
+	for (i = 0; i < numSpaces; ++i) {
+		// Add up neighbor to list
+		if (i >= SPACE_WIDTH)
+			adjList[i][0] = i - SPACE_LENGTH;
+		
+		// Add down neighbor to list
+		if (i < (numSpaces - SPACE_WIDTH))
+			adjList[i][1] = i + SPACE_LENGTH;
+		
+		// Add left neighbor to list
+		if (i % SPACE_WIDTH != 0)
+			adjList[i][2] = i - 1;
+
+		// Add right neighbor to list 
+		if (i % SPACE_WIDTH != (SPACE_WIDTH - 1))
+			adjList[i][3] = i + 1;
+	}
+	// printAdjList(adjList);
+}
+
+__device__ nextSpace 
+CUDA_findMinimum(space *in, int adjList[][POSSIBLE_DIRECTIONS], int idx) {
+	int min = 9999;
+	int min_idx = -1;
+	int j;
+	const int WALL_COST = 3;
+	nextSpace next;
+	
+	// Find the best next step based on our index's neighbors.
+	for (j = 0; j < POSSIBLE_DIRECTIONS; ++j) {
+		if (adjList[idx][j] == -1 || in[adjList[idx][j]].state == VISITED)
+			continue;
+
+		if (j == 0) {
+			if (in[idx].up && min > WALL_COST) {
+				min = WALL_COST;
+				min_idx = adjList[idx][j];
+			}
+			else if (!in[idx].up && min > 1) {
+				min = 1;
+				min_idx = adjList[idx][j];
+			}
+		}
+		if (j == 1) { 
+			if (in[idx].down && WALL_COST <= min) { 
+				min = WALL_COST;
+				min_idx = adjList[idx][j];
+			}
+			else if (!in[idx].down && min > 1) {
+				min = 1;
+				min_idx = adjList[idx][j];
+			}
+		}
+		if (j == 2) {
+			if (in[idx].left && min > WALL_COST) {
+				min = WALL_COST;
+				min_idx = adjList[idx][j];
+			}
+			else if (!in[idx].left && min > 1) {
+				min = 1;
+				min_idx = adjList[idx][j];
+			}
+		}
+		if (j == 3) {
+			if (in[idx].right && min > WALL_COST) {
+				min = WALL_COST;
+				min_idx = adjList[idx][j];
+			}
+			else if (!in[idx].right && min > 1) {
+				min = 1;
+				min_idx = adjList[idx][j];
+			}
+		}
+	}
+
+	next.index = min_idx;
+	next.distance = min;
+
+	return next;
+}
+
+
+__device__ void 
+CUDA_resetSpaces(space *in) {
+	int i;
+	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
+
+	for (i = 0; i < numSpaces; ++i) {
+		in[i].parent = -1;
+		in[i].state = UNEXPLORED;
+	}
+	
+	return;
+}
+
+__device__ int 
+CUDA_shortestPath(space *in, int idxIn = 0) {
+
+	int adjList[SPACE_LENGTH*SPACE_WIDTH][POSSIBLE_DIRECTIONS];
+	CUDA_initializeAdjList(adjList);
+	int i = idxIn;
+	nextSpace next;
+	int distance;
+
+	// If shortestPath is used multiple times then we need to reset the parent & state.
+	CUDA_resetSpaces(in);
+	
+	// Iterate through the board until we reach the finish node.
+	while (!in[i].finish) {
+		// Run greedy shortest path on all of the current space's neighbors.
+		in[i].state = VISITED;
+		int tmp = i;
+		next = CUDA_findMinimum(in, adjList, i);
+		i = next.index;
+
+		if (i == -1) {
+			i = in[tmp].parent;
+		}
+		else {
+			in[i].parent = tmp;
+			in[i].distance = in[in[i].parent].distance + next.distance;
+		}
+	}
+
+	distance = in[i].distance;
+	printf("Total distance: %d\n", distance);
+	while (!in[i].start) {
+		printf("Space #%d\n", i);
+		i = in[i].parent;
+	}
+	printf("Space #%d\n", i);
+
+	return distance;
+}
 
 
 

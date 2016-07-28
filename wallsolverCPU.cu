@@ -11,6 +11,10 @@
 #include <sys/time.h>
 
 
+
+
+
+
 #define SPACE_LENGTH 5		// Spaces Size of rows / columns 
 #define SPACE_WIDTH 5 
 #define NUM_SPACES 25
@@ -741,9 +745,10 @@ int* findNeighbors(space *in, int idx) {
 }
 
 
-int getPossibleMoves(space *board, int pos, nextMove *in) {
+int getPossibleMoves(space *board, int pos, int *numSpaces) {
 	// Counter number of possible spaces @ pos
 	int *neighbors = findNeighbors(board, pos);
+
 
 	int possibleSpaces = 0;
 	for(int i = 0; i < 12; i++) {
@@ -752,7 +757,7 @@ int getPossibleMoves(space *board, int pos, nextMove *in) {
 		if (neighbors[i] != -1) possibleSpaces++;
 	}
 
-	in = (nextMove *) malloc( sizeof(nextMove) * possibleSpaces );
+	nextMove *moves = (nextMove *) malloc( sizeof(nextMove) * possibleSpaces );
 
 	int j = 0;
 	for(int i = 0; i < 12 && j < possibleSpaces; i++) {
@@ -768,7 +773,10 @@ int getPossibleMoves(space *board, int pos, nextMove *in) {
 
 	}
 
-	return possibleSpaces;
+	free(neighbors);
+	
+	numSpaces = possibleSpaces;
+	return moves;
 }
 
 
@@ -820,6 +828,7 @@ int main(int argc, char const *argv[])
 
 
 	// Get neighbors of a space
+	/*
 	int *neighbors = findNeighbors(board, 7);
 	int i;
 	for (i = 0; i < 12; ++i) {
@@ -865,10 +874,12 @@ int main(int argc, char const *argv[])
 			j++;
 		}
 	}
-	
+
+	*/
+
 	// TODO: DEBUG this function
-	//nextMove *moves = NULL;
-	//int possibleSpaces = getPossibleMoves(board, playerPos, moves);
+	int *possibleSpaces = (int *)malloc(sizeof(int));
+	nextMove *moves = getPossibleMoves(board, playerPos, possibleSpaces);
 
 	/* start counting time */
 	gettimeofday(&startTime, &Idunno);
@@ -896,7 +907,8 @@ int main(int argc, char const *argv[])
 
 	free(walls);
 	free(board);
-	free(neighbors);
+	free(possibleSpaces);
+	//free(neighbors);
 	free(moves);
 
 
