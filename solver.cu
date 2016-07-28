@@ -240,7 +240,7 @@ int main(int argc, char const *argv[])
 
 	// Copy Device --> Host
 	// cudaMemcpy(target, source, size, function)
-	checkCudaError( cudaMemcpy(moves, d_walls, (sizeof(nextMove) * possibleSpaces), cudaMemcpyDeviceToHost), 
+	checkCudaError( cudaMemcpy(moves, d_moves, (sizeof(nextMove) * possibleSpaces), cudaMemcpyDeviceToHost), 
 		"Copy moves to host");
 
 
