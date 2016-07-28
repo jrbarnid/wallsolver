@@ -57,7 +57,6 @@ typedef struct nextMove {
 struct timezone Idunno;	
 struct timeval startTime, endTime;
 
-
 /* 
 	set a checkpoint and show the (natural) running time in seconds 
 */
