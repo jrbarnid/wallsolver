@@ -734,7 +734,33 @@ int* findNeighbors(space *in, int idx) {
 	return neighbors;
 }
 
+nextMove pickBestMove(nextMove *moves, int possibleSpaces) {
+	nextMove best;
+	
+	if (possibleSpaces > 0) {
+		best.space = moves[0].space;
+		best.playerScore = moves[0].playerScore;
+		best.oppScore = moves[0].oppScore;
+		best.wallIdx = moves[0].wallIdx;
+		best.newDir = moves[0].newDir;
+	}
 
+	int diff = best.oppScore - best.playerScore;
+	int i;
+	for (i = 0; i < possibleSpaces; ++i) {
+		int tmpdiff = moves[i].oppScore - moves[i].playerScore;
+		if (tmpdiff > diff) {
+			best.space = moves[i].space;
+			best.playerScore = moves[i].playerScore;
+			best.oppScore = moves[i].oppScore;
+			best.wallIdx = moves[i].wallIdx;
+			best.newDir = moves[i].newDir;
+			diff = tmpdiff;
+		}
+	}
+
+	return best;
+}
 
 
 
