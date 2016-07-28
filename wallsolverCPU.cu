@@ -930,6 +930,8 @@ int main(int argc, char const *argv[])
 	
 	
 	outputResults(moves, possibleSpaces);
+
+	// PICK THE BEST MOVE
 	nextMove bestMove = pickBestMove(moves, possibleSpaces);
 	printf("Best Move: %d\n", bestMove.space);
 
