@@ -20,7 +20,7 @@ __global__ void
 solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	int tidx = threadIdx.x;	// X-Dim = Wall
 	int tidy = threadIdx.y;	// Y-Dim = Direction
-	int space = blockIdx.x;	// Space #
+	int idx = blockIdx.x;	// Space #
 
 	// Coalesced Load d_walls Global --> Shared for this Block
 	// Only threads (0-15, 0)
@@ -36,11 +36,11 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 
 	// Spaces 0-15	First 16 spaces
 	if (tidy == 1) {
-		CUDA_boardInitParallel(&sharedBoardTemplate, tidx);
+		CUDA_boardInitParallel(sharedBoardTemplate, tidx);
 	}
 	// Spaces 16-29
 	if (tidy = 2 && (tidx + 16) < NUM_SPACES) {
-		CUDA_boardInitParallel(&sharedBoardTemplate, (tidx + NUM_WALLS));
+		CUDA_boardInitParallel(sharedBoardTemplate, (tidx + NUM_WALLS));
 	}
 
 	// Create shared move, global --> shared
@@ -51,23 +51,23 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 
 		switch(tidx) {
 			case 0:
-				move.space = d_moves[space].space;
+				move.space = d_moves[idx].space;
 				break;
 
 			case 1:
-				move.playerScore = d_moves[space].playerScore;
+				move.playerScore = d_moves[idx].playerScore;
 				break;
 
 			case 2:
-				move.oppScore = d_moves[space].oppScore;
+				move.oppScore = d_moves[idx].oppScore;
 				break;
 
 			case 3:
-				move.wallIdx = d_moves[space].wallIdx;
+				move.wallIdx = d_moves[idx].wallIdx;
 				break;
 
 			case 4: 
-				move.newDir = d_moves[space].newDir;
+				move.newDir = d_moves[idx].newDir;
 				break;
 		}
 
@@ -95,7 +95,7 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	// Create a new board 
 	space board[NUM_SPACES];
 
-	CUDA_boardInitSeq(&board);
+	CUDA_boardInitSeq(board);
 
 	// Initialize the board
 
