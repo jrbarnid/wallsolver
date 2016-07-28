@@ -137,29 +137,26 @@ CUDA_boardInitParallel(space *board, int idx) {
 
 
 __device__ void
-CUDA_boardInitSeq(space *board, int idx) {
+CUDA_boardInitSeq(space *board) {
 	// mod = 0 == left edge space
 	// mod = 4 == right edge space
-	int i = idx / WALL_LENGTH;
-	int j = idx % WALL_LENGTH;
+	int i, j;
+	for (int idx = 0; idx < NUM_SPACES; i++) {
+		i = idx / WALL_LENGTH;
+		j = idx % WALL_LENGTH;
 
-	// Better to avoid divergence
-	board[idx].up = (i != 0);
-	board[idx].left = (j != 0);
-	board[idx].down = (i != (SPACE_WIDTH - 1));
-	board[idx].right = (j != (SPACE_LENGTH - 1));
-	board[idx].finish = false;
-	board[idx].parent = -1;
-	board[idx].distance = 0;
-	board[idx].state = UNEXPLORED;
+		// Better to avoid divergence
+		board[idx].up = (i != 0);
+		board[idx].left = (j != 0);
+		board[idx].down = (i != (SPACE_WIDTH - 1));
+		board[idx].right = (j != (SPACE_LENGTH - 1));
+		board[idx].finish = false;
+		board[idx].parent = -1;
+		board[idx].distance = 0;
+		board[idx].state = UNEXPLORED;
+	}
+
 }
-
-
-
-
-
-
-
 
 
 
