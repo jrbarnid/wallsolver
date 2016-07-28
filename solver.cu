@@ -21,7 +21,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	int tidy = threadIdx.y;		// Y-Dim = Direction
 	int idx = blockIdx.x;		// Space #
 
-
+	printf("Thread: (%d, %d)\n", tidx, tidy);
 	// - - - - - 
 	// Coalesced Load d_walls Global --> Shared for this Block
 	// Only threads (0-15, 0)
@@ -43,7 +43,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	}
 	// Spaces 16-29
 	if (tidy = 2 && (tidx + 16) < NUM_SPACES) {
-		printf("tidx: %d; NUM_SPACES: %d\n", tidx, NUM_SPACES);
+		printf("tidx: %d; NUM_SPACES: %d\n", (tidx + 16), NUM_SPACES);
 		CUDA_boardInitParallel(sharedBoardTemplate, (tidx + 16));
 	}
 
@@ -114,7 +114,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	int playerScore = CUDA_shortestPath(&l_board[0], move.space);
 	int oppScore = CUDA_shortestPath(&l_board[0], oppPos);
 
-	printf("playerScore: %d\noppScore: %d\n", playerScore, oppScore);
+	printf("PlayerPos: %d -- PlayerScore: %d -- OppScore: %d\n", move.space, playerScore, oppScore);
 	if (playerScore < move.playerScore || oppScore > move.oppScore) {
 		move.playerScore = playerScore;
 		move.oppScore = oppScore;
@@ -122,8 +122,9 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 		move.newDir = (wall) tidy;
 	}
 
-
 } 
+
+
 // CUDA Error Check
 void checkCudaError(cudaError_t e, char const *in) {
 	if (e != cudaSuccess) {

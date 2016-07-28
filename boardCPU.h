@@ -215,7 +215,7 @@ void generateWalls(wall *walls) {
 			int idx = (i * WALL_WIDTH) + j;
 
 			while (checkWallCollisions(walls, idx)) {
-				printf("IDX No Overlap: %d - %d\n", idx, walls[idx]);
+				//printf("IDX No Overlap: %d - %d\n", idx, walls[idx]);
 				walls[idx] = (wall)(rand() % 4);			
 			}
 		}
@@ -254,16 +254,7 @@ void outputResults(nextMove *results, int numResults) {
 }
 
 
-/* Used strictly for debugging. This should not be used in the final version */
-void printAdjList(int adjList[][POSSIBLE_DIRECTIONS]) {
-	int i = 0;
-	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
 
-	for (i = 0; i < numSpaces; ++i) {
-		printf("Space #%d's neighbors: UP: %d, DOWN: %d, LEFT: %d, RIGHT: %d \n", i, 
-				adjList[i][0], adjList[i][1], adjList[i][2], adjList[i][3]);
-	}
-}
 
 /* Set all neighbors to -1, then cycle through and add neighbors for each space
    All spaces marked with -1 afterwards means the neighbor is invalid and can be ignored
