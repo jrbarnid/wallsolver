@@ -244,6 +244,7 @@ void outputResults(nextMove *results, int numResults) {
 	/*	Output the best valued move for each space
 	
 	*/
+	printf("----- RESULTS -----\n");
 	for (int i = 0; i < numResults; i++) {
 		printf("Best Move for Space %d\n", results[i].space);
 		printf("Move wall %d to direction %d\n", results[i].wallIdx, results[i].newDir);
