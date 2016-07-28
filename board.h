@@ -72,7 +72,7 @@ CUDA_generateBoard(space *board, wall *walls) {
 		for (int j = 0; j < WALL_LENGTH; j++) {
 			int idx = (i * WALL_LENGTH) + j;
 
-			printf("Maze Generated: %d - %d\n", idx, walls[idx]);
+			//printf("Maze Generated: %d - %d\n", idx, walls[idx]);
 
 			// Determine the 4 adjacent spaces to this wall
 			int TL = idx + i;
@@ -159,7 +159,7 @@ CUDA_printAdjList(int adjList[][POSSIBLE_DIRECTIONS]) {
 	int numSpaces = SPACE_LENGTH * SPACE_WIDTH;
 
 	for (i = 0; i < numSpaces; ++i) {
-		printf("Space #%d's neighbors: UP: %d, DOWN: %d, LEFT: %d, RIGHT: %d \n", i, 
+		//printf("Space #%d's neighbors: UP: %d, DOWN: %d, LEFT: %d, RIGHT: %d \n", i, 
 				adjList[i][0], adjList[i][1], adjList[i][2], adjList[i][3]);
 	}
 }
@@ -304,12 +304,12 @@ CUDA_shortestPath(space *in, int idxIn = 0) {
 	}
 
 	distance = in[i].distance;
-	printf("Total distance: %d\n", distance);
+	//printf("Total distance: %d\n", distance);
 	while (!in[i].start) {
-		printf("Space #%d\n", i);
+		//printf("Space #%d\n", i);
 		i = in[i].parent;
 	}
-	printf("Space #%d\n", i);
+	//printf("Space #%d\n", i);
 
 	return distance;
 }
