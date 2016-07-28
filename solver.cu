@@ -128,7 +128,7 @@ calcBestMove() {
 
 	// moveWall (walls, tid, newDir, position)
 
-	CUDA_moveWallParallel2D(walls,)
+	//CUDA_moveWallParallel2D(walls,)
 
 }
 
