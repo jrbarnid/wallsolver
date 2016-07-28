@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <cuda_runtime.h>
-#include "boardCPU.cu"
+#include "boardCPU.h"
 
 
 

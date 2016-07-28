@@ -8,8 +8,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include <cuda_runtime.h>
-#include "board.cu"
-
+#include "board.h"
 
 /*	Parallel version of moveAllWalls. 
 	2D thread array. 
@@ -17,7 +16,7 @@
 
 */
 __global__ void
-solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
+CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	int tidx = threadIdx.x;		// X-Dim = Wall
 	int tidy = threadIdx.y;		// Y-Dim = Direction
 	int idx = blockIdx.x;		// Space #
@@ -128,7 +127,7 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 
 
 // CUDA Error Check
-void checkCudaError(cudaError_t e, char in[]) {
+void checkCudaError(cudaError_t e, char const *in) {
 	if (e != cudaSuccess) {
 		printf("CUDA Error: %s, %s \n", in, cudaGetErrorString(e));
 		exit(EXIT_FAILURE);
