@@ -18,10 +18,12 @@
 */
 __global__ void
 solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
-	int tidx = threadIdx.x;	// X-Dim = Wall
-	int tidy = threadIdx.y;	// Y-Dim = Direction
-	int idx = blockIdx.x;	// Space #
+	int tidx = threadIdx.x;		// X-Dim = Wall
+	int tidy = threadIdx.y;		// Y-Dim = Direction
+	int idx = blockIdx.x;		// Space #
 
+
+	// - - - - - 
 	// Coalesced Load d_walls Global --> Shared for this Block
 	// Only threads (0-15, 0)
 	__shared__ wall sharedWalls[NUM_WALLS];
@@ -30,9 +32,11 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 		sharedWalls[tidx] = d_walls[tidx];
 	}
 
+
+	// - - - - -
 	// Create a blank board template --> Shared for this block
 	// Only threads (0-15, 1)
-	extern __shared__ space sharedBoardTemplate[];
+	__shared__ space sharedBoardTemplate[NUM_SPACES];
 
 	// Spaces 0-15	First 16 spaces
 	if (tidy == 1) {
@@ -40,17 +44,19 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	}
 	// Spaces 16-29
 	if (tidy = 2 && (tidx + 16) < NUM_SPACES) {
-		CUDA_boardInitParallel(sharedBoardTemplate, (tidx + NUM_WALLS));
+		CUDA_boardInitParallel(sharedBoardTemplate, (tidx + 16));
 	}
 
+
+	// - - - - - 
 	// Create shared move, global --> shared
 	// Threads (0-4, 3)
 	__shared__ nextMove move;
 
 	if (tidy == 3) {
 
-		switch(tidx) {
-			case 0:
+		switch(tidx) {		// Thread [] 
+			case 0:		
 				move.space = d_moves[idx].space;
 				break;
 
@@ -75,6 +81,9 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 
 	__syncthreads();
 
+
+
+
 	// Each thread makes local copy of walls
 	wall l_walls[NUM_WALLS];
 	memcpy(&l_walls, sharedWalls, (sizeof(wall) * NUM_WALLS));
@@ -92,19 +101,38 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	}
 	// If no collision, contune
 
-	// Create a new board 
-	space board[NUM_SPACES];
 
-	CUDA_boardInitSeq(board);
+	// Create local copy of new board 
+	space l_board[NUM_SPACES];
+	l_board = sharedBoardTemplate;	// Copy the blank template previously generated
 
-	// Initialize the board
-
-
-	// Calculate shortest path for player
-
-	// Calculate shortest path for opponent
+	// Generate the board from the walls
+	CUDA_generateBoard(&l_board, l_walls);
 
 
+ /*	typedef struct nextMove {
+		int space;
+		int playerScore;
+		int oppScore;
+		int wallIdx;
+		wall newDir;
+	} nextMove;
+
+ */
+	
+
+	// Calculate shortest path for player & opponent
+	int playerScore = CUDA_shortestPath(&l_board, move.space);
+	int oppScore = CUDA_shortestPath(&l_board, oppPos);
+
+	if (playerScore < move.playerScore || oppScore > move.oppScore) {
+		move.playerScore = playerScore;
+		move.oppScore = oppScore;
+		move.wallIdx = tidx;
+		move.newDir = (wall) tidy;
+	}
+
+	
 }
 
 
