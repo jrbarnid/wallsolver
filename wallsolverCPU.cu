@@ -781,6 +781,35 @@ nextMove *getPossibleMoves(space *board, int pos, int *numSpaces) {
 }
 
 
+nextMove pickBestMove(nextMove *moves, int possibleSpaces) {
+	nextMove best;
+	
+	if (possibleSpaces > 0) {
+		best.space = moves[0].space;
+		best.playerScore = moves[0].playerScore;
+		best.oppScore = moves[0].oppScore;
+		best.wallIdx = moves[0].wallIdx;
+		best.newDir = moves[0].newDir;
+	}
+
+	int diff = best.oppScore - best.playerScore;
+	int i;
+	for (i = 0; i < possibleSpaces; ++i) {
+		int tmpdiff = moves[i].oppScore - moves[i].playerScore;
+		if (tmpdiff > diff) {
+			best.space = moves[i].space;
+			best.playerScore = moves[i].playerScore;
+			best.oppScore = moves[i].oppScore;
+			best.wallIdx = moves[i].wallIdx;
+			best.newDir = moves[i].newDir;
+			diff = tmpdiff;
+		}
+	}
+
+	return best;
+}
+
+
 
 int main(int argc, char const *argv[])
 {
@@ -901,6 +930,8 @@ int main(int argc, char const *argv[])
 	
 	
 	outputResults(moves, possibleSpaces);
+	nextMove bestMove = pickBestMove(moves, possibleSpaces);
+	printf("Best Move: %d\n", bestMove.space);
 
 
 	printf("Memory Sizes - walls: %d, board: %d, nextMove (maximum): %d, neighbors: %d\n", wallSize, spaceSize, sizeof(nextMove)*12, sizeof(neighbors));

@@ -43,6 +43,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	}
 	// Spaces 16-29
 	if (tidy = 2 && (tidx + 16) < NUM_SPACES) {
+		printf("tidx: %d; NUM_SPACES: %d\n", tidx, NUM_SPACES);
 		CUDA_boardInitParallel(sharedBoardTemplate, (tidx + 16));
 	}
 
@@ -113,6 +114,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	int playerScore = CUDA_shortestPath(&l_board[0], move.space);
 	int oppScore = CUDA_shortestPath(&l_board[0], oppPos);
 
+	printf("playerScore: %d\noppScore: %d\n", playerScore, oppScore);
 	if (playerScore < move.playerScore || oppScore > move.oppScore) {
 		move.playerScore = playerScore;
 		move.oppScore = oppScore;
@@ -121,11 +123,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	}
 
 
-}
-
-
-
-
+} 
 // CUDA Error Check
 void checkCudaError(cudaError_t e, char const *in) {
 	if (e != cudaSuccess) {
@@ -240,7 +238,7 @@ int main(int argc, char const *argv[])
 
 	// Copy Device --> Host
 	// cudaMemcpy(target, source, size, function)
-	checkCudaError( cudaMemcpy(moves, d_walls, (sizeof(nextMove) * possibleSpaces), cudaMemcpyDeviceToHost), 
+	checkCudaError( cudaMemcpy(moves, d_moves, (sizeof(nextMove) * possibleSpaces), cudaMemcpyDeviceToHost), 
 		"Copy moves to host");
 
 
