@@ -42,7 +42,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 		CUDA_boardInitParallel(sharedBoardTemplate, tidx);
 	}
 	// Spaces 16-29
-	if (tidy = 2 && (tidx + 16) < NUM_SPACES) {
+	if (tidy == 2 && (tidx + 16) < NUM_SPACES) {
 		printf("tidx: %d; NUM_SPACES: %d\n", (tidx + 16), NUM_SPACES);
 		CUDA_boardInitParallel(sharedBoardTemplate, (tidx + 16));
 	}
@@ -86,13 +86,17 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 
 	// Each thread makes local copy of walls
 	wall l_walls[NUM_WALLS];
-	memcpy(&l_walls, sharedWalls, (sizeof(wall) * NUM_WALLS));
+	for (int i = 0; i < NUM_WALLS; i++) {
+		l_walls[i] = sharedWalls[i];
+	}
 
 
 	// Check for wall collisions && if it's the same direction
 	wall oldDir = l_walls[tidx];
 
 	bool sameDir = (oldDir == (wall)tidy);
+
+	l_walls[tidx] = (wall) tidy;
 	bool collision = CUDA_checkWallCollisions(&l_walls[0], tidx);
 
 	if (sameDir || collision) {
@@ -104,7 +108,10 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 
 	// Create local copy of new board 
 	space l_board[NUM_SPACES];
-	memcpy(&l_board, sharedBoardTemplate, sizeof(space) * NUM_SPACES);
+	for (int i = 0; i < NUM_SPACES; i++) {
+		l_board[i] = sharedBoardTemplate[i];
+	}
+
 
 	// Generate the board from the walls
 	CUDA_generateBoard(&l_board[0], l_walls);
@@ -115,12 +122,15 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	int oppScore = CUDA_shortestPath(&l_board[0], oppPos);
 
 	printf("PlayerPos: %d -- PlayerScore: %d -- OppScore: %d\n", move.space, playerScore, oppScore);
+
 	if (playerScore < move.playerScore || oppScore > move.oppScore) {
 		move.playerScore = playerScore;
 		move.oppScore = oppScore;
 		move.wallIdx = tidx;
 		move.newDir = (wall) tidy;
 	}
+
+	d_moves[idx] = move;
 
 } 
 
@@ -157,6 +167,7 @@ int main(int argc, char const *argv[])
 	generateWalls(walls);
 	generateBoard(board, walls);
 
+	outputBoard(board);
 
 	// Find nearest neighbors to player
 	int *neighbors = findNeighbors(board, playerPos);
