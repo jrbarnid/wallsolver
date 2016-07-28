@@ -206,7 +206,7 @@ int main(int argc, char const *argv[])
 	checkCudaError( cudaMemcpy(d_walls, walls, wallSize, cudaMemcpyHostToDevice), 
 		"Copy walls to device");
 	checkCudaError( cudaMemcpy(d_moves, moves, (sizeof(nextMove) * possibleSpaces), cudaMemcpyHostToDevice), 
-		"Copy walls to device");
+		"Copy moves to device");
 
 
 
@@ -232,14 +232,25 @@ int main(int argc, char const *argv[])
 	cudaEventSynchronize(stop);
 	float elapsedTime;
 	cudaEventElapsedTime(&elapsedTime, start, stop);
-	printf("Time to generate: %f ms \n", elapsedTime);
+	printf("Time to generate: %0.5f ms\n", elapsedTime );
 
 	cudaEventDestroy(start);
 	cudaEventDestroy(stop);
 
 
+	// Copy Device --> Host
+	// cudaMemcpy(target, source, size, function)
+	checkCudaError( cudaMemcpy(moves, d_walls, (sizeof(nextMove) * possibleSpaces), cudaMemcpyDeviceToHost), 
+		"Copy moves to host");
+
+
+	outputResults(moves, possibleSpaces);
+
 
 	// Free Memory
+	checkCudaError(cudaFree(d_walls), "Free device histogram");
+	checkCudaError(cudaFree(d_moves), "Free device atom_list");
+
 	free(board);
 	free(walls);
 	free(moves);
