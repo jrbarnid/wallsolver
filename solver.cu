@@ -104,26 +104,15 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 
 	// Create local copy of new board 
 	space l_board[NUM_SPACES];
-	l_board = sharedBoardTemplate;	// Copy the blank template previously generated
+	memcpy(&l_board, sharedBoardTemplate, sizeof(space) * NUM_SPACES);
 
 	// Generate the board from the walls
-	CUDA_generateBoard(&l_board, l_walls);
+	CUDA_generateBoard(&l_board[0], l_walls);
 
-
- /*	typedef struct nextMove {
-		int space;
-		int playerScore;
-		int oppScore;
-		int wallIdx;
-		wall newDir;
-	} nextMove;
-
- */
-	
 
 	// Calculate shortest path for player & opponent
-	int playerScore = CUDA_shortestPath(&l_board, move.space);
-	int oppScore = CUDA_shortestPath(&l_board, oppPos);
+	int playerScore = CUDA_shortestPath(&l_board[0], move.space);
+	int oppScore = CUDA_shortestPath(&l_board[0], oppPos);
 
 	if (playerScore < move.playerScore || oppScore > move.oppScore) {
 		move.playerScore = playerScore;
@@ -132,31 +121,6 @@ solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 		move.newDir = (wall) tidy;
 	}
 
-	
-}
-
-
-
-
-/* Kernel
-
-*/
-__global__ void
-calcBestMove() {
-	int gtid, block, tidx, tidy;
-	tidx = threadIdx.x;
-	tidy = threadIdx.y;
-	block = blockIdx.x;
-
-	gtid = block * blockDim.x + tidx + tidy;
-	
-	// Block = Space
-	// x = tid.x 	wall
-	// y = tid.y	wall direction 0 - 4
-
-	// moveWall (walls, tid, newDir, position)
-
-	//CUDA_moveWallParallel2D(walls,)
 
 }
 
