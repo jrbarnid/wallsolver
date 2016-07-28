@@ -891,6 +891,9 @@ int main(int argc, char const *argv[])
 	printf("----- RESULTS -----\n");
 	outputResults(moves, possibleSpaces);
 
+
+	printf("Memory Sizes - walls: %d, board: %d, nextMove (maximum): %d, neighbors: %d\n", wallSize, spaceSize, sizeof(nextMove)*12, sizeof(neighbors));
+
 	free(walls);
 	free(board);
 	free(neighbors);
