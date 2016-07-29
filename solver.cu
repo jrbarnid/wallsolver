@@ -160,15 +160,15 @@ int main(int argc, char const *argv[])
 	wall *walls = (wall *)malloc(wallSize);
 	space *board = (space *)malloc(spaceSize);
 
-
-
 	// Initialize and setup the current board state
 	boardInit(board);
 	generateWalls(walls);
 	generateBoard(board, walls);
 
-	outputBoard(board);
-
+	//display board
+	outputBoard(board);  //display by numbers
+	displayBoard(board); //display visually
+	
 	// Find nearest neighbors to player
 	int *neighbors = findNeighbors(board, playerPos);
 
@@ -242,7 +242,7 @@ int main(int argc, char const *argv[])
 	cudaEventSynchronize(stop);
 	float elapsedTime;
 	cudaEventElapsedTime(&elapsedTime, start, stop);
-	printf("Time to generate: %0.5f ms\n", elapsedTime );
+	printf("Time to generate: %0.5f seconds\n", elapsedTime/1000);
 
 	cudaEventDestroy(start);
 	cudaEventDestroy(stop);
