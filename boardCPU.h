@@ -223,7 +223,7 @@ void generateWalls(wall *walls) {
 
 }
 
-
+//output board configuration by numbers
 void outputBoard(space *in) {
 
 	for (int i = 0; i < SPACE_WIDTH; i++) {
@@ -232,13 +232,90 @@ void outputBoard(space *in) {
 			int idx = (i * SPACE_WIDTH) + j;	// == board[i][j];
 
 			printf("outputBoard: Space #: %d, UP: %d, DOWN: %d, LEFT: %d, RIGHT: %d \n", idx, in[idx].up, in[idx].down, in[idx].left, in[idx].right);
-
 		}
-
 	}
-
 }
 
+//display board configuration visually
+void displayBoard(space *in)
+{
+	int bWidth = 1+2*SPACE_WIDTH;
+	int bLength = 1+2*SPACE_LENGTH;
+	char boardArray[bLength][bWidth];
+
+	printf("\n");
+	printf("Display Board:\n");
+	printf("(s = starting position; e = end goal)\n");
+
+	//initialize boardArray to blank spaces
+	for (int i=0; i<bWidth; i++)
+	{
+		for (int j=0;j<bLength;j++)
+		{
+			boardArray[i][j] = ' ';
+		}
+	}
+
+        //populate boardArray
+        for (int i=0; i<SPACE_WIDTH; i++)
+        {
+                for (int j=0; j< SPACE_LENGTH; j++)
+                {
+                        int idx = (i*SPACE_WIDTH)+j;
+
+                        if (in[idx].up==1)
+			{
+                              boardArray[2*i][2*j+1] = '*';
+			      boardArray[2*i][2*j+2] = '*';
+			}
+                        else
+                              boardArray[2*i][2*j+1] = ' ';
+
+                        if (in[idx].right == 1)
+			{
+                              boardArray[2*i+1][2*j+2] = '*';
+			      boardArray[2*i+2][2*j+2] = '*';
+			      boardArray[2*i][2*j+2] = '*';
+			}
+                        else
+                              boardArray[2*i+1][2*j+2] = ' ';
+                }
+        }
+
+	//set board vertical borders
+	for (int i = 0; i<bWidth; i++)
+	{
+		boardArray[i][0] = '*';
+		boardArray[i][bWidth-1] = '*';
+	}
+
+	//set board horizontal borders
+	for (int i = 0; i< bWidth; i++)
+	{
+		for (int j=0; j<bLength; j++)
+		{
+			if (i == 0) 				//if it's the first row
+				boardArray[i][j] = '*';			//set border
+			if (i == bWidth-1) 			//if it's the last row
+				boardArray[i][j] = '*';			//set border
+		}
+	}
+
+	//set start and end points
+	boardArray[1][1] = 's';
+	boardArray[bLength-2][bWidth-2] = 'e';
+
+	//print boardArray
+	for (int i=0; i<bWidth; i++)
+	{
+		for (int j = 0; j<bLength; j++)
+		{
+			printf("%c", boardArray[i][j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
 
 void outputResults(nextMove *results, int numResults) {
 	/*	Output the best valued move for each space
