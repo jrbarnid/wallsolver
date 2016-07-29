@@ -21,7 +21,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	int tidy = threadIdx.y;		// Y-Dim = Direction
 	int idx = blockIdx.x;		// Space #
 
-	printf("Thread: (%d, %d)\n", tidx, tidy);
+	//printf("Thread: (%d, %d)\n", tidx, tidy);
 	// - - - - - 
 	// Coalesced Load d_walls Global --> Shared for this Block
 	// Only threads (0-15, 0)
@@ -43,7 +43,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	}
 	// Spaces 16-29
 	if (tidy == 2 && (tidx + 16) < NUM_SPACES) {
-		printf("tidx: %d; NUM_SPACES: %d\n", (tidx + 16), NUM_SPACES);
+		//printf("tidx: %d; NUM_SPACES: %d\n", (tidx + 16), NUM_SPACES);
 		CUDA_boardInitParallel(sharedBoardTemplate, (tidx + 16));
 	}
 
@@ -121,7 +121,7 @@ CUDA_solveForAllWalls(wall *d_walls, nextMove *d_moves, int oppPos) {
 	int playerScore = CUDA_shortestPath(&l_board[0], move.space);
 	int oppScore = CUDA_shortestPath(&l_board[0], oppPos);
 
-	printf("PlayerPos: %d -- PlayerScore: %d -- OppScore: %d\n", move.space, playerScore, oppScore);
+	printf("PlayerPos: %d -- Wall Idx: %d -- Wall Pos: %d -- PlayerScore: %d -- OppScore: %d\n", move.space, tidx, tidy, playerScore, oppScore);
 
 	if (playerScore < move.playerScore || oppScore > move.oppScore) {
 		move.playerScore = playerScore;
@@ -160,15 +160,15 @@ int main(int argc, char const *argv[])
 	wall *walls = (wall *)malloc(wallSize);
 	space *board = (space *)malloc(spaceSize);
 
-
-
 	// Initialize and setup the current board state
 	boardInit(board);
 	generateWalls(walls);
 	generateBoard(board, walls);
 
-	outputBoard(board);
-
+	//display board
+	outputBoard(board);  //display by numbers
+	displayBoard(board); //display visually
+	
 	// Find nearest neighbors to player
 	int *neighbors = findNeighbors(board, playerPos);
 
@@ -242,7 +242,7 @@ int main(int argc, char const *argv[])
 	cudaEventSynchronize(stop);
 	float elapsedTime;
 	cudaEventElapsedTime(&elapsedTime, start, stop);
-	printf("Time to generate: %0.5f ms\n", elapsedTime );
+	printf("Time to generate: %0.5f seconds\n", elapsedTime/1000);
 
 	cudaEventDestroy(start);
 	cudaEventDestroy(stop);
@@ -256,6 +256,9 @@ int main(int argc, char const *argv[])
 
 	outputResults(moves, possibleSpaces);
 
+	// PICK THE BEST MOVE
+	nextMove bestMove = pickBestMove(moves, possibleSpaces);
+	printf("Best Move: %d\n", bestMove.space);
 
 	// Free Memory
 	checkCudaError(cudaFree(d_walls), "Free device histogram");
